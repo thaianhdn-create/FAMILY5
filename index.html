@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="vi"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#2563eb"><link rel="manifest" href="manifest.json"><title>Family 5</title>
+<meta name="theme-color" content="#2563eb"><link rel="manifest" href="manifest.json"><title>Family 5 V15</title>
 <style>
 :root{--b:#2563eb;--bg:#f4f7fb;--card:#fff;--t:#172033;--m:#687280;--l:#e5eaf2}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--t);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}.app{max-width:480px;margin:auto;padding-bottom:78px}
@@ -23,9 +23,35 @@ nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:min(480px,
 
 .chore{padding:11px 0;border-bottom:1px solid var(--l);align-items:flex-start}.chore:last-child{border-bottom:0}.chore input{width:20px;height:20px;margin-top:2px}.chore .meta{font-size:11px;color:var(--m);margin-top:3px}.chore .actions{display:flex;gap:5px}.choreTitle{font-size:15px}.choreNote{font-size:12px;color:var(--m);margin-top:4px}.repeatBadge{font-size:11px;font-weight:700;padding:3px 7px;border-radius:8px;background:#f1f5f9}
 </style>
+
+<style>
+/* V15: Dashboard trực quan */
+.dash-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin:10px 0}
+.dash-card{border:1px solid var(--l);border-radius:14px;padding:11px;background:#f8fafc}
+.dash-card .big{font-size:25px;font-weight:850;line-height:1.05;color:var(--b)}
+.dash-card .label{font-size:11px;color:var(--m);margin-top:4px}
+.dash-card.good .big{color:#15803d}
+.dash-card.warn .big{color:#c2410c}
+.dash-card.purple .big{color:#7c3aed}
+.dash-section{margin-top:12px;padding-top:11px;border-top:1px solid var(--l)}
+.dash-title{font-weight:800;font-size:14px;margin-bottom:8px}
+.progress{height:9px;background:#e9eef5;border-radius:99px;overflow:hidden}
+.progress>i{display:block;height:100%;background:var(--b);border-radius:99px}
+.progress-row{display:grid;grid-template-columns:62px 1fr 38px;gap:7px;align-items:center;margin:8px 0;font-size:11px}
+.progress-row b{font-size:11px}
+.next-item{display:flex;gap:8px;padding:8px 0;border-bottom:1px solid var(--l);font-size:12px}
+.next-item:last-child{border-bottom:0}
+.next-time{width:43px;font-weight:800;color:var(--b)}
+.dash-empty{font-size:12px;color:var(--m);padding:5px 0}
+</style>
 </head><body><div class="app">
 <header><div class="brand"><div><h1>🏠 Family 5</h1><small>Cùng nhau sắp xếp cuộc sống tốt đẹp hơn</small></div><button class="btn" onclick="reminderModal()">🔔</button></div><div class="members" id="top"></div></header>
-<section id="home" class="page active"><div class="card"><div class="row between"><b id="date"></b><button class="btn" onclick="go('cal')">Xem lịch</button></div><div class="quote">☀️ Một gia đình hạnh phúc là nền tảng của mọi thành công.</div></div><div class="card"><h2>Việc sắp tới hôm nay</h2><div id="homeEvents"></div></div><div class="card"><h2>⚠️ Cảnh báo & đưa đón</h2><div id="alerts"></div></div><div class="card"><h2>✅ Công việc hôm nay</h2><div id="homeTasks"></div></div></section>
+<section id="home" class="page active">
+<div class="card">
+  <div class="row between"><div><b id="date"></b><div class="sub">📊 Tổng quan gia đình hôm nay</div></div><button class="btn" onclick="go('cal')">Xem lịch</button></div>
+  <div id="dashboard"></div>
+  <div class="quote">☀️ Một gia đình hạnh phúc là nền tảng của mọi thành công.</div>
+</div><div class="card"><h2>Việc sắp tới hôm nay</h2><div id="homeEvents"></div></div><div class="card"><h2>⚠️ Cảnh báo & đưa đón</h2><div id="alerts"></div></div><div class="card"><h2>✅ Công việc hôm nay</h2><div id="homeTasks"></div></div></section>
 <section id="cal" class="page"><div class="card"><div class="tabs"><button class="active" id="td" onclick="view='day';renderCal()">Ngày</button><button id="tw" onclick="view='week';renderCal()">Tuần</button><button id="tm" onclick="view='month';renderCal()">Tháng</button></div><div class="filters" id="filters"></div><div id="calendar"></div></div></section>
 <section id="chores" class="page">
 <div class="card">
@@ -131,7 +157,54 @@ function deleteChore(id){
 }
 function toggleChore(id){let c=D.chores.find(x=>x.id===id);if(c){c.done=!c.done;save()}}
 
-function render(){top.innerHTML=M.map(m=>`<div class="member"><div class="av" style="background:${m[3]}22">${m[2]}</div>${m[1]}</div>`).join('');date.textContent=new Date().toLocaleDateString('vi-VN',{weekday:'long',day:'2-digit',month:'2-digit',year:'numeric'});let ev=D.events.filter(e=>e.date===today()).sort((a,b)=>a.time.localeCompare(b.time));homeEvents.innerHTML=ev.slice(0,8).map(eventHTML).join('')||'<p>Không có lịch</p>';homeTasks.innerHTML=D.tasks.map(taskHTML).join('');let pairs=conflicts();alerts.innerHTML=(pairs.length?`<div class="alert">⚠️ Có ${pairs.length} lịch trùng.<br>Kiểm tra lại lịch.</div>`:'<div class="alert ok">✓ Chưa phát hiện lịch trùng.</div>')+D.pickups.filter(p=>p.date===today()).map(p=>`<div class="alert ok">🚗 ${p.time} · ${P(p.driver)[1]} đón ${P(p.child)[1]} · ${p.place}</div>`).join('');nt.textContent=D.tasks.length;nd.textContent=D.tasks.filter(t=>t.done).length;no.textContent=D.tasks.filter(t=>!t.done).length;let shownTasks=D.tasks.filter(t=>taskFilter==='all'||(taskFilter==='done'?t.done:!t.done)).sort((a,b)=>(a.done-b.done)||((a.due||'9999-12-31').localeCompare(b.due||'9999-12-31')));
+
+function renderDashboard(){
+  const el=document.getElementById('dashboard'); if(!el)return;
+  const d=today();
+  const ev=D.events.filter(e=>e.date===d).sort((a,b)=>a.time.localeCompare(b.time));
+  const tasks=D.tasks||[], chores=D.chores||[], picks=(D.pickups||[]).filter(p=>p.date===d);
+  const td=tasks.filter(t=>t.done).length, to=tasks.length-td;
+  const cd=chores.filter(c=>c.done).length, co=chores.length-cd;
+  const taskPct=tasks.length?Math.round(td/tasks.length*100):0;
+  const chorePct=chores.length?Math.round(cd/chores.length*100):0;
+  const nowTime=new Date().toTimeString().slice(0,5);
+  const upcoming=ev.filter(e=>e.time>=nowTime).slice(0,4);
+
+  let members=M.map(m=>{
+    const ecount=ev.filter(e=>e.person===m[0]||e.person==='all').length;
+    const tcount=tasks.filter(t=>t.person===m[0]&&!t.done).length;
+    const ccount=chores.filter(c=>c.person===m[0]&&!c.done).length;
+    return {...m,count:ecount+tcount+ccount};
+  });
+  const max=Math.max(1,...members.map(x=>x.count));
+
+  el.innerHTML=`
+    <div class="dash-grid">
+      <div class="dash-card"><div class="big">${ev.length}</div><div class="label">📅 Lịch hôm nay</div></div>
+      <div class="dash-card ${to?'warn':'good'}"><div class="big">${td}/${tasks.length}</div><div class="label">✅ Công việc xong</div></div>
+      <div class="dash-card ${co?'warn':'good'}"><div class="big">${cd}/${chores.length}</div><div class="label">🧹 Việc nhà xong</div></div>
+      <div class="dash-card purple"><div class="big">${picks.length}</div><div class="label">🚗 Chuyến đưa đón</div></div>
+    </div>
+
+    <div class="dash-section">
+      <div class="dash-title">📈 Tiến độ hôm nay</div>
+      <div class="progress-row"><b>Việc</b><div class="progress"><i style="width:${taskPct}%"></i></div><b>${taskPct}%</b></div>
+      <div class="progress-row"><b>Việc nhà</b><div class="progress"><i style="width:${chorePct}%"></i></div><b>${chorePct}%</b></div>
+    </div>
+
+    <div class="dash-section">
+      <div class="dash-title">👨‍👩‍👧‍👦 Mức độ bận của từng thành viên</div>
+      ${members.map(m=>`<div class="progress-row"><b>${m[2]} ${m[1]}</b><div class="progress"><i style="width:${Math.round(m.count/max*100)}%"></i></div><b>${m.count}</b></div>`).join('')}
+    </div>
+
+    <div class="dash-section">
+      <div class="dash-title">⏰ Lịch sắp tới</div>
+      ${upcoming.length?upcoming.map(e=>`<div class="next-item"><div class="next-time">${e.time}</div><div><b>${e.title}</b><div class="sub">${P(e.person)[2]} ${P(e.person)[1]} · ${e.type}</div></div></div>`).join(''):'<div class="dash-empty">Không còn lịch sắp tới hôm nay.</div>'}
+    </div>
+  `;
+}
+
+function render(){renderDashboard();top.innerHTML=M.map(m=>`<div class="member"><div class="av" style="background:${m[3]}22">${m[2]}</div>${m[1]}</div>`).join('');date.textContent=new Date().toLocaleDateString('vi-VN',{weekday:'long',day:'2-digit',month:'2-digit',year:'numeric'});let ev=D.events.filter(e=>e.date===today()).sort((a,b)=>a.time.localeCompare(b.time));homeEvents.innerHTML=ev.slice(0,8).map(eventHTML).join('')||'<p>Không có lịch</p>';homeTasks.innerHTML=D.tasks.map(taskHTML).join('');let pairs=conflicts();alerts.innerHTML=(pairs.length?`<div class="alert">⚠️ Có ${pairs.length} lịch trùng.<br>Kiểm tra lại lịch.</div>`:'<div class="alert ok">✓ Chưa phát hiện lịch trùng.</div>')+D.pickups.filter(p=>p.date===today()).map(p=>`<div class="alert ok">🚗 ${p.time} · ${P(p.driver)[1]} đón ${P(p.child)[1]} · ${p.place}</div>`).join('');nt.textContent=D.tasks.length;nd.textContent=D.tasks.filter(t=>t.done).length;no.textContent=D.tasks.filter(t=>!t.done).length;let shownTasks=D.tasks.filter(t=>taskFilter==='all'||(taskFilter==='done'?t.done:!t.done)).sort((a,b)=>(a.done-b.done)||((a.due||'9999-12-31').localeCompare(b.due||'9999-12-31')));
 tasksList.innerHTML=shownTasks.map(taskHTML).join('')||'<div class="help" style="padding:15px;text-align:center">Không có công việc trong mục này.</div>';
 let shownChores=D.chores.filter(c=>choreFilter==='all'||(choreFilter==='done'?c.done:!c.done)).sort((a,b)=>(a.done-b.done)||a.start.localeCompare(b.start));
 if(document.getElementById('choresList'))document.getElementById('choresList').innerHTML=shownChores.map(choreHTML).join('')||'<div class="help" style="padding:15px;text-align:center">Chưa có việc nhà.</div>';
