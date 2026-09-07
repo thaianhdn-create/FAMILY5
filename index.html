@@ -20,11 +20,28 @@ nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:min(480px,
 .modal{overflow:auto}.modal .sheet{max-height:92vh;overflow:auto;width:min(480px,calc(100% - 24px));padding:18px}.repeat-box{background:#f7f9fc;border:1px solid var(--l);border-radius:14px;padding:12px;margin:10px 0}.days{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}.days label{font-size:12px;text-align:center;border:1px solid var(--l);background:#fff;border-radius:9px;padding:8px 3px;cursor:pointer}.days input{margin-right:3px}.help{font-size:12px;color:var(--m);line-height:1.45}.series{color:#2563eb;font-size:11px;font-weight:700}
 
 .task{padding:11px 0;border-bottom:1px solid var(--l);align-items:flex-start}.task:last-child{border-bottom:0}.task input{width:20px;height:20px;margin-top:2px}.task .meta{font-size:11px;color:var(--m);margin-top:3px}.task .actions{display:flex;gap:5px}.priority{font-size:11px;font-weight:700;padding:3px 7px;border-radius:8px;background:#f1f5f9}.overdue{font-weight:700}.taskTitle{font-size:15px}.taskNote{font-size:12px;color:var(--m);margin-top:4px}
+
+.chore{padding:11px 0;border-bottom:1px solid var(--l);align-items:flex-start}.chore:last-child{border-bottom:0}.chore input{width:20px;height:20px;margin-top:2px}.chore .meta{font-size:11px;color:var(--m);margin-top:3px}.chore .actions{display:flex;gap:5px}.choreTitle{font-size:15px}.choreNote{font-size:12px;color:var(--m);margin-top:4px}.repeatBadge{font-size:11px;font-weight:700;padding:3px 7px;border-radius:8px;background:#f1f5f9}
 </style>
 </head><body><div class="app">
 <header><div class="brand"><div><h1>🏠 Family 5</h1><small>Cùng nhau sắp xếp cuộc sống tốt đẹp hơn</small></div><button class="btn" onclick="reminderModal()">🔔</button></div><div class="members" id="top"></div></header>
 <section id="home" class="page active"><div class="card"><div class="row between"><b id="date"></b><button class="btn" onclick="go('cal')">Xem lịch</button></div><div class="quote">☀️ Một gia đình hạnh phúc là nền tảng của mọi thành công.</div></div><div class="card"><h2>Việc sắp tới hôm nay</h2><div id="homeEvents"></div></div><div class="card"><h2>⚠️ Cảnh báo & đưa đón</h2><div id="alerts"></div></div><div class="card"><h2>✅ Công việc hôm nay</h2><div id="homeTasks"></div></div></section>
 <section id="cal" class="page"><div class="card"><div class="tabs"><button class="active" id="td" onclick="view='day';renderCal()">Ngày</button><button id="tw" onclick="view='week';renderCal()">Tuần</button><button id="tm" onclick="view='month';renderCal()">Tháng</button></div><div class="filters" id="filters"></div><div id="calendar"></div></div></section>
+<section id="chores" class="page">
+<div class="card">
+  <div class="row between"><h2>🏠 Việc nhà</h2><button class="btn" onclick="choreModal()">＋ Thêm</button></div>
+  <div class="stat">
+    <div><span class="num" id="nc">0</span><br>Tổng</div>
+    <div><span class="num" id="cd">0</span><br>Đã xong</div>
+    <div><span class="num" id="co">0</span><br>Còn lại</div>
+  </div>
+  <div class="tabs" style="margin:10px 0">
+    <button id="cfAll" class="active" onclick="choreFilter='all';render()">Tất cả</button>
+    <button id="cfOpen" onclick="choreFilter='open';render()">Chưa xong</button>
+    <button id="cfDone" onclick="choreFilter='done';render()">Đã xong</button>
+  </div>
+  <div id="choresList"></div>
+</div></section>
 <section id="tasks" class="page"><div class="card"><div class="row between"><h2>✅ Công việc gia đình</h2><button class="btn" onclick="taskModal()">+ Thêm</button></div><div class="stat"><div><span class="num" id="nt">0</span><br>Tổng</div><div><span class="num" id="nd">0</span><br>Đã xong</div><div><span class="num" id="no">0</span><br>Còn lại</div></div><div class="tabs" style="margin:10px 0"><button id="tfAll" class="active" onclick="taskFilter='all';render()">Tất cả</button><button id="tfOpen" onclick="taskFilter='open';render()">Chưa xong</button><button id="tfDone" onclick="taskFilter='done';render()">Đã xong</button></div><div id="tasksList"></div></div></section>
 <section id="family" class="page"><div class="card"><div class="row between"><h2>👨‍👩‍👧‍👦 Thành viên gia đình</h2><button class="btn primary" onclick="addMember()">＋ Thêm thành viên</button></div><div class="help">Xóa một thành viên sẽ xóa toàn bộ lịch, công việc và lịch đưa đón gắn với thành viên đó. 🖼️ Bạn có thể chọn icon đại diện; dùng emoji nên không làm tăng dung lượng ứng dụng.</div><div id="familyList"></div></div></section>
 <section id="more" class="page"><div class="card"><h2>⚙️ Tính năng gia đình</h2><p>🚗 <b>Đưa đón:</b> quản lý ai đón ai.</p><p>🔔 <b>Nhắc việc:</b> chọn thời gian nhắc ngay khi thêm hoặc sửa lịch.</p><button class="btn" onclick="reminderModal()">🔔 Cài đặt thông báo</button><p>⚠️ <b>Trùng lịch:</b> tự kiểm tra lịch của cùng thành viên.</p><p>💾 <b>Dữ liệu:</b> lưu trên thiết bị và có thể xuất bản sao.</p><button class="btn" onclick="pickupModal()">🚗 Thêm lịch đưa đón</button></div></section>
@@ -38,8 +55,9 @@ const allMembers=()=>[...M,ALL];
 const memberSave=()=>localStorage.setItem('family5_members',JSON.stringify(M));
 const today=()=>new Date().toISOString().slice(0,10),P=id=>allMembers().find(x=>x[0]===id)||M[0],save=()=>{localStorage.setItem('family5_v2',JSON.stringify(D));render()};
 let D=JSON.parse(localStorage.getItem('family5_v2')||'null')||{filter:'all',events:[['06:00','06:45','Tập thể dục','dad','Thể thao'],['07:00','07:30','Ăn sáng','all','Gia đình'],['07:30','11:30','Đi học','c1','Học tập'],['07:30','11:30','Đi học','c2','Học tập'],['08:00','17:00','Đi làm','mom','Công việc'],['16:30','17:00','Đón Con 1','dad','Đưa đón'],['17:00','18:30','Bóng đá','c2','Thể thao'],['19:30','21:00','Xem phim','all','Gia đình']].map((x,i)=>({id:i+1,date:today(),time:x[0],end:x[1],title:x[2],person:x[3],type:x[4]})),tasks:[{id:1,title:'Mua thực phẩm',person:'mom',done:false},{id:2,title:'Làm bài tập Toán',person:'c1',done:false},{id:3,title:'Vệ sinh phòng',person:'c2',done:false},{id:4,title:'Kiểm tra điều hòa',person:'dad',done:false},{id:5,title:'Dọn bàn ăn',person:'c3',done:true}],pickups:[{date:today(),time:'16:30',child:'c1',driver:'dad',place:'Cổng trường'}]};
-let view='day',taskFilter='all';
+let view='day',taskFilter='all',choreFilter='all';
 D.tasks=(D.tasks||[]).map(t=>({...t,due:t.due||'',priority:t.priority||'normal',note:t.note||''}));
+D.chores=(D.chores||[]).map(c=>({...c,repeat:c.repeat||'once',start:c.start||c.due||today(),end:c.end||c.due||c.start||today(),note:c.note||'',remind:Number(c.remind)||0,done:!!c.done}));
 function go(id,b){document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));document.getElementById(id).classList.add('active');document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));if(b)b.classList.add('active');if(id==='cal')renderCal();window.scrollTo(0,0)}
 function eventHTML(e){let p=P(e.person);return `<div class="event"><b>${e.time}</b><i class="dot" style="background:${p[3]}"></i><div><div class="title">${e.title} ${e.repeat&&e.repeat!=='none'?'<span class="series">🔁</span>':''} <button class="btn" style="padding:3px 7px;float:right" onclick="eventActions(${e.id})">⋮</button></div><div class="sub">${p[2]} ${p[1]} · ${e.type}${e.end?' · '+e.end:''}</div></div></div>`}
 function taskHTML(t){
@@ -55,8 +73,74 @@ function taskHTML(t){
     </div>
   </div>`;
 }
+
+function choreDates(start,end,repeat){
+  let out=[], s=new Date(start+'T00:00:00'), e=new Date(end+'T00:00:00');
+  if(isNaN(s)||isNaN(e)||e<s)return out;
+  if(repeat==='once')return [start];
+  let guard=0;
+  for(let d=new Date(s);d<=e&&guard<500;d.setDate(d.getDate()+1),guard++){
+    if(repeat==='daily'||(repeat==='weekly'&&d.getDay()===s.getDay()))out.push(d.toISOString().slice(0,10));
+  }
+  return out;
+}
+function choreHTML(c){
+  let p=P(c.person), rep=c.repeat==='daily'?'🔁 Hàng ngày':c.repeat==='weekly'?'🔁 Hàng tuần':'📌 Một lần';
+  return `<div class="chore row">
+    <input type="checkbox" ${c.done?'checked':''} onchange="toggleChore(${c.id})" aria-label="Đánh dấu hoàn thành">
+    <div style="flex:1;min-width:0">
+      <div class="row between"><div class="choreTitle ${c.done?'done':''}"><b>${c.title}</b></div><div class="actions"><button class="btn" style="padding:4px 7px" onclick="editChore(${c.id})">✏️</button><button class="btn" style="padding:4px 7px" onclick="deleteChore(${c.id})">🗑️</button></div></div>
+      <div class="meta">${p[2]} ${p[1]} · <span class="repeatBadge">${rep}</span> · 📅 ${c.start}${c.repeat!=='once'?` → ${c.end}`:''}${c.remind?` · 🔔 ${c.remind} phút`:''}</div>
+      ${c.note?`<div class="choreNote">${c.note}</div>`:''}
+    </div>
+  </div>`;
+}
+function choreModal(e={}){
+  let isEdit=!!e.id;
+  modal(`<h2>${isEdit?'✏️ Sửa':'🏠 Thêm'} việc nhà</h2>
+    <div class="field"><label>Việc nhà</label><input id="cn" value="${e.title||''}" placeholder="Ví dụ: Rửa bát"></div>
+    <div class="field"><label>Phân công</label><select id="cp">${M.map(m=>`<option value="${m[0]}" ${e.person===m[0]?'selected':''}>${m[2]} ${m[1]}</option>`).join('')}<option value="all" ${e.person==='all'?'selected':''}>👨‍👩‍👧‍👦 Cả nhà</option></select></div>
+    <div class="field"><label>Lặp lại</label><select id="cr" onchange="toggleChoreDates()"><option value="once" ${!e.repeat||e.repeat==='once'?'selected':''}>Một lần</option><option value="daily" ${e.repeat==='daily'?'selected':''}>Hàng ngày</option><option value="weekly" ${e.repeat==='weekly'?'selected':''}>Hàng tuần</option></select></div>
+    <div class="field"><label>Ngày bắt đầu</label><input id="cs" type="date" value="${e.start||today()}"></div>
+    <div class="field" id="ceWrap" style="${e.repeat&&e.repeat!=='once'?'':'display:none'}"><label>Ngày kết thúc</label><input id="ce" type="date" value="${e.end||e.start||today()}"></div>
+    <div class="field"><label>Nhắc trước</label><select id="crm"><option value="0" ${!e.remind?'selected':''}>Không nhắc</option><option value="5" ${e.remind==5?'selected':''}>5 phút</option><option value="15" ${e.remind==15?'selected':''}>15 phút</option><option value="30" ${e.remind==30?'selected':''}>30 phút</option><option value="60" ${e.remind==60?'selected':''}>1 giờ</option></select></div>
+    <div class="field"><label>Ghi chú</label><input id="cno" value="${e.note||''}" placeholder="Ghi chú nếu cần"></div>
+    <div class="row"><button class="btn" onclick="closeM()">Hủy</button><button class="btn primary" onclick="${isEdit?`updateChore(${e.id})`:'addChore()'}">💾 Lưu</button></div>`)
+}
+function toggleChoreDates(){let v=cr.value;ceWrap.style.display=v==='once'?'none':''}
+function addChore(){
+  if(!cn.value.trim())return alert('Vui lòng nhập việc nhà.');
+  let end=(cr.value==='once'?cs.value:(ce.value||cs.value));
+  if(end<cs.value)return alert('Ngày kết thúc phải từ ngày bắt đầu trở đi.');
+  D.chores.push({id:Date.now(),title:cn.value.trim(),person:cp.value,repeat:cr.value,start:cs.value,end,remind:Number(crm.value)||0,note:cno.value.trim(),done:false});
+  closeM();save()
+}
+function editChore(id){let c=D.chores.find(x=>x.id===id);if(c)choreModal(c)}
+function updateChore(id){
+  let c=D.chores.find(x=>x.id===id);if(!c)return;
+  if(!cn.value.trim())return alert('Vui lòng nhập việc nhà.');
+  let end=(cr.value==='once'?cs.value:(ce.value||cs.value));
+  if(end<cs.value)return alert('Ngày kết thúc phải từ ngày bắt đầu trở đi.');
+  Object.assign(c,{title:cn.value.trim(),person:cp.value,repeat:cr.value,start:cs.value,end,remind:Number(crm.value)||0,note:cno.value.trim()});
+  closeM();save()
+}
+function deleteChore(id){
+  let c=D.chores.find(x=>x.id===id);if(!c)return;
+  let count=choreDates(c.start,c.end,c.repeat).length;
+  if(confirm(c.repeat==='once'?`Xóa việc "${c.title}"?`:`Xóa cả chuỗi "${c.title}" (${count} lần)?`)){D.chores=D.chores.filter(x=>x.id!==id);save()}
+}
+function toggleChore(id){let c=D.chores.find(x=>x.id===id);if(c){c.done=!c.done;save()}}
+
 function render(){top.innerHTML=M.map(m=>`<div class="member"><div class="av" style="background:${m[3]}22">${m[2]}</div>${m[1]}</div>`).join('');date.textContent=new Date().toLocaleDateString('vi-VN',{weekday:'long',day:'2-digit',month:'2-digit',year:'numeric'});let ev=D.events.filter(e=>e.date===today()).sort((a,b)=>a.time.localeCompare(b.time));homeEvents.innerHTML=ev.slice(0,8).map(eventHTML).join('')||'<p>Không có lịch</p>';homeTasks.innerHTML=D.tasks.map(taskHTML).join('');let pairs=conflicts();alerts.innerHTML=(pairs.length?`<div class="alert">⚠️ Có ${pairs.length} lịch trùng.<br>Kiểm tra lại lịch.</div>`:'<div class="alert ok">✓ Chưa phát hiện lịch trùng.</div>')+D.pickups.filter(p=>p.date===today()).map(p=>`<div class="alert ok">🚗 ${p.time} · ${P(p.driver)[1]} đón ${P(p.child)[1]} · ${p.place}</div>`).join('');nt.textContent=D.tasks.length;nd.textContent=D.tasks.filter(t=>t.done).length;no.textContent=D.tasks.filter(t=>!t.done).length;let shownTasks=D.tasks.filter(t=>taskFilter==='all'||(taskFilter==='done'?t.done:!t.done)).sort((a,b)=>(a.done-b.done)||((a.due||'9999-12-31').localeCompare(b.due||'9999-12-31')));
 tasksList.innerHTML=shownTasks.map(taskHTML).join('')||'<div class="help" style="padding:15px;text-align:center">Không có công việc trong mục này.</div>';
+let shownChores=D.chores.filter(c=>choreFilter==='all'||(choreFilter==='done'?c.done:!c.done)).sort((a,b)=>(a.done-b.done)||a.start.localeCompare(b.start));
+if(document.getElementById('choresList'))document.getElementById('choresList').innerHTML=shownChores.map(choreHTML).join('')||'<div class="help" style="padding:15px;text-align:center">Chưa có việc nhà.</div>';
+let ct=D.chores.length, cdone=D.chores.filter(x=>x.done).length;
+if(document.getElementById('nc'))document.getElementById('nc').textContent=ct;
+if(document.getElementById('cd'))document.getElementById('cd').textContent=cdone;
+if(document.getElementById('co'))document.getElementById('co').textContent=ct-cdone;
+['cfAll','cfOpen','cfDone'].forEach(id=>{let el=document.getElementById(id);if(el)el.classList.toggle('active',(id==='cfAll'&&choreFilter==='all')||(id==='cfOpen'&&choreFilter==='open')||(id==='cfDone'&&choreFilter==='done'));});
+
 ['tfAll','tfOpen','tfDone'].forEach(id=>{let el=document.getElementById(id);if(el)el.classList.toggle('active',(id==='tfAll'&&taskFilter==='all')||(id==='tfOpen'&&taskFilter==='open')||(id==='tfDone'&&taskFilter==='done'));});familyList.innerHTML=M.map(m=>`<div class="memberrow"><div class="row between"><div class="row"><button class="btn" style="font-size:25px;padding:7px 10px" onclick="avatarModal('${m[0]}')">${m[2]}</button><div><div class="membername">${m[1]}</div><div class="sub">${D.events.filter(e=>e.person===m[0]).length} lịch · ${D.tasks.filter(t=>t.person===m[0]&&!t.done).length} việc còn lại</div></div></div><div class="row" style="flex-wrap:wrap"><button class="btn" onclick="avatarModal('${m[0]}')">🖼️ Icon</button><button class="btn" onclick="renameMember('${m[0]}')">✏️ Đổi tên</button><button class="btn danger" onclick="deleteMember('${m[0]}')">🗑️ Xóa</button></div></div></div>`).join('');renderCal()}
 const avatarChoices=['👨','👩','👦','👧','🧑','👶','👨‍💼','👩‍💼','👨‍🎓','👩‍🎓','👴','👵','🧑‍🚀','🧑‍🍳','⚽','🏃','🎓','🎨'];
 function avatarModal(id){
