@@ -112,43 +112,17 @@ function eventActions(id){let e=D.events.find(x=>x.id===id);if(!e)return;let cou
 function deleteEvent(id,all=false){let e=D.events.find(x=>x.id===id);if(!e)return;let msg=all?`⚠️ Xóa toàn bộ ${D.events.filter(x=>x.seriesId===e.seriesId).length} lần của lịch "${e.title}"?`:`⚠️ Bạn có chắc muốn xóa lịch "${e.title}" không?`;if(!confirm(msg))return;if(all&&e.seriesId)D.events=D.events.filter(x=>x.seriesId!==e.seriesId);else D.events=D.events.filter(x=>x.id!==id);closeM();save();go('cal')}
 function editEvent(id){eventModal(D.events.find(e=>e.id===id))}
 
-let alarmCtx=null;
-let alarmEnabled=localStorage.getItem('family5_alarm_sound')==='1';
-function initAlarmSound(){
-  try{
-    const AC=window.AudioContext||window.webkitAudioContext;
-    if(!AC)return false;
-    if(!alarmCtx)alarmCtx=new AC();
-    if(alarmCtx.state==='suspended')alarmCtx.resume();
-    alarmEnabled=true;
-    localStorage.setItem('family5_alarm_sound','1');
-    return true;
-  }catch(e){return false}
-}
-function playAlarm(){
-  if(!alarmEnabled)return;
-  try{
-    if(!alarmCtx&&!initAlarmSound())return;
-    if(alarmCtx.state==='suspended')alarmCtx.resume();
-    const now=alarmCtx.currentTime;
-    const gain=alarmCtx.createGain();
-    gain.gain.setValueAtTime(0.0001,now);
-    gain.gain.exponentialRampToValueAtTime(0.28,now+0.03);
-    gain.gain.exponentialRampToValueAtTime(0.0001,now+0.65);
-    gain.connect(alarmCtx.destination);
-    [0,0.18,0.36,0.54].forEach((off,i)=>{
-      const o=alarmCtx.createOscillator();
-      o.type='sine'; o.frequency.value=i%2?880:660;
-      o.connect(gain); o.start(now+off); o.stop(now+off+0.13);
-    });
-    if(navigator.vibrate)navigator.vibrate([250,120,250]);
-  }catch(e){}
-}
+let alarmCtx=null; let alarmEnabled=localStorage.getItem('family5_alarm_sound')==='1'; let alarmLoop=null; let alarmStopTimer=null;
+function initAlarmSound(){ try{ const AC=window.AudioContext||window.webkitAudioContext; if(!AC)return false; if(!alarmCtx)alarmCtx=new AC(); if(alarmCtx.state==='suspended')alarmCtx.resume(); alarmEnabled=true; localStorage.setItem('family5_alarm_sound','1'); return true; }catch(e){return false} }
+function playAlarm(){ if(!alarmEnabled)return; try{ if(!alarmCtx&&!initAlarmSound())return; if(alarmCtx.state==='suspended')alarmCtx.resume(); const now=alarmCtx.currentTime; const gain=alarmCtx.createGain(); gain.gain.setValueAtTime(0.0001,now); gain.gain.exponentialRampToValueAtTime(0.28,now+0.03); gain.gain.exponentialRampToValueAtTime(0.0001,now+0.75); gain.connect(alarmCtx.destination); [0,0.18,0.36,0.54].forEach((off,i)=>{const o=alarmCtx.createOscillator();o.type='sine';o.frequency.value=i%2?880:660;o.connect(gain);o.start(now+off);o.stop(now+off+0.14);}); if(navigator.vibrate)navigator.vibrate([300,120,300]); }catch(e){} }
+function startAlarm(){ if(!alarmEnabled)return; stopAlarm(); playAlarm(); alarmLoop=setInterval(playAlarm,1800); alarmStopTimer=setTimeout(stopAlarm,60000); showAlarmBox(); }
+function stopAlarm(){ if(alarmLoop){clearInterval(alarmLoop);alarmLoop=null;} if(alarmStopTimer){clearTimeout(alarmStopTimer);alarmStopTimer=null;} if(navigator.vibrate)navigator.vibrate(0); let b=document.getElementById('family5AlarmBox'); if(b)b.remove(); }
+function showAlarmBox(){ let b=document.getElementById('family5AlarmBox'); if(b)b.remove(); b=document.createElement('div'); b.id='family5AlarmBox'; b.style.cssText='position:fixed;left:50%;bottom:82px;transform:translateX(-50%);z-index:9999;background:#172033;color:#fff;border-radius:16px;padding:12px 14px;box-shadow:0 8px 30px rgba(0,0,0,.25);width:min(92vw,420px);display:flex;align-items:center;gap:10px;justify-content:space-between'; b.innerHTML='<div><b>🔔 FAMILY 5</b><div style="font-size:12px;opacity:.9">Đang báo thức — tối đa 1 phút</div></div><button class="btn" style="background:#fff;color:#172033;padding:9px 13px" onclick="stopAlarm()">⏹ Tắt</button>'; document.body.appendChild(b); }
 function reminderModal(){
   let supported='Notification'in window;
   let status=!supported?'Trình duyệt không hỗ trợ':Notification.permission==='granted'?'Đã bật thông báo':Notification.permission==='denied'?'Đã bị chặn':'Chưa cấp quyền';
   let sound=alarmEnabled?'Đã bật âm thanh':'Chưa bật âm thanh';
-  modal(`<h2>🔔 Nhắc việc</h2><div class="alert ok">Thông báo: <b>${status}</b><br>Âm thanh: <b>${sound}</b></div><p class="sub">Khi đến thời gian nhắc, Family 5 sẽ hiện thông báo và phát tiếng báo nếu âm thanh đã được bật. Rung tùy thiết bị/trình duyệt.</p><div class="row" style="flex-wrap:wrap"><button class="btn primary" onclick="enableAlarm()">🔊 Bật âm thanh</button><button class="btn" onclick="testAlarm()">▶️ Thử âm thanh</button></div><div class="row" style="margin-top:9px"><button class="btn" onclick="requestNotify()">🔔 Bật thông báo</button><button class="btn" onclick="closeM()">Đóng</button></div>`);
+  modal(`<h2>🔔 Nhắc việc</h2><div class="alert ok">Thông báo: <b>${status}</b><br>Âm thanh: <b>${sound}</b></div><p class="sub">Khi đến thời gian nhắc, Family 5 sẽ phát báo thức lặp trong tối đa 1 phút và có nút Tắt. Rung tùy thiết bị/trình duyệt. Nếu trình duyệt bị Android tạm dừng khi app chạy nền, âm thanh có thể không phát liên tục.</p><div class="row" style="flex-wrap:wrap"><button class="btn primary" onclick="enableAlarm()">🔊 Bật âm thanh</button><button class="btn" onclick="testAlarm()">▶️ Thử âm thanh</button></div><div class="row" style="margin-top:9px"><button class="btn" onclick="requestNotify()">🔔 Bật thông báo</button><button class="btn" onclick="closeM()">Đóng</button></div>`);
 }
 function enableAlarm(){
   if(initAlarmSound()){playAlarm();alert('🔊 Đã bật âm thanh báo thức cho Family 5.');}
@@ -156,7 +130,7 @@ function enableAlarm(){
 }
 function testAlarm(){
   if(!initAlarmSound()){alert('⚠️ Không thể bật âm thanh trên trình duyệt này.');return}
-  playAlarm();
+  startAlarm();
 }
 async function requestNotify(){
   initAlarmSound();
@@ -175,7 +149,7 @@ function reminderCheck(){
       sent[sid]=Date.now();
       localStorage.setItem('family5_sent',JSON.stringify(sent));
       let msg=`${e.title} · ${P(e.person)[1]} · ${e.time}`;
-      playAlarm();
+      startAlarm();
       if('Notification'in window&&Notification.permission==='granted') new Notification('🔔 Family 5', {body:`Sắp đến lịch: ${msg}`});
       else {
         let old=document.getElementById('alerts');
