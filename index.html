@@ -18,12 +18,14 @@ nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:min(480px,
 <style>
 /* V8: recurring schedules */
 .modal{overflow:auto}.modal .sheet{max-height:92vh;overflow:auto;width:min(480px,calc(100% - 24px));padding:18px}.repeat-box{background:#f7f9fc;border:1px solid var(--l);border-radius:14px;padding:12px;margin:10px 0}.days{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}.days label{font-size:12px;text-align:center;border:1px solid var(--l);background:#fff;border-radius:9px;padding:8px 3px;cursor:pointer}.days input{margin-right:3px}.help{font-size:12px;color:var(--m);line-height:1.45}.series{color:#2563eb;font-size:11px;font-weight:700}
+
+.task{padding:11px 0;border-bottom:1px solid var(--l);align-items:flex-start}.task:last-child{border-bottom:0}.task input{width:20px;height:20px;margin-top:2px}.task .meta{font-size:11px;color:var(--m);margin-top:3px}.task .actions{display:flex;gap:5px}.priority{font-size:11px;font-weight:700;padding:3px 7px;border-radius:8px;background:#f1f5f9}.overdue{font-weight:700}.taskTitle{font-size:15px}.taskNote{font-size:12px;color:var(--m);margin-top:4px}
 </style>
 </head><body><div class="app">
 <header><div class="brand"><div><h1>🏠 Family 5</h1><small>Cùng nhau sắp xếp cuộc sống tốt đẹp hơn</small></div><button class="btn" onclick="reminderModal()">🔔</button></div><div class="members" id="top"></div></header>
 <section id="home" class="page active"><div class="card"><div class="row between"><b id="date"></b><button class="btn" onclick="go('cal')">Xem lịch</button></div><div class="quote">☀️ Một gia đình hạnh phúc là nền tảng của mọi thành công.</div></div><div class="card"><h2>Việc sắp tới hôm nay</h2><div id="homeEvents"></div></div><div class="card"><h2>⚠️ Cảnh báo & đưa đón</h2><div id="alerts"></div></div><div class="card"><h2>✅ Công việc hôm nay</h2><div id="homeTasks"></div></div></section>
 <section id="cal" class="page"><div class="card"><div class="tabs"><button class="active" id="td" onclick="view='day';renderCal()">Ngày</button><button id="tw" onclick="view='week';renderCal()">Tuần</button><button id="tm" onclick="view='month';renderCal()">Tháng</button></div><div class="filters" id="filters"></div><div id="calendar"></div></div></section>
-<section id="tasks" class="page"><div class="card"><div class="row between"><h2>✅ Công việc gia đình</h2><button class="btn" onclick="taskModal()">+ Thêm</button></div><div class="stat"><div><span class="num" id="nt">0</span><br>Tổng</div><div><span class="num" id="nd">0</span><br>Đã xong</div><div><span class="num" id="no">0</span><br>Còn lại</div></div><div id="tasksList"></div></div></section>
+<section id="tasks" class="page"><div class="card"><div class="row between"><h2>✅ Công việc gia đình</h2><button class="btn" onclick="taskModal()">+ Thêm</button></div><div class="stat"><div><span class="num" id="nt">0</span><br>Tổng</div><div><span class="num" id="nd">0</span><br>Đã xong</div><div><span class="num" id="no">0</span><br>Còn lại</div></div><div class="tabs" style="margin:10px 0"><button id="tfAll" class="active" onclick="taskFilter='all';render()">Tất cả</button><button id="tfOpen" onclick="taskFilter='open';render()">Chưa xong</button><button id="tfDone" onclick="taskFilter='done';render()">Đã xong</button></div><div id="tasksList"></div></div></section>
 <section id="family" class="page"><div class="card"><div class="row between"><h2>👨‍👩‍👧‍👦 Thành viên gia đình</h2><button class="btn primary" onclick="addMember()">＋ Thêm thành viên</button></div><div class="help">Xóa một thành viên sẽ xóa toàn bộ lịch, công việc và lịch đưa đón gắn với thành viên đó. 🖼️ Bạn có thể chọn icon đại diện; dùng emoji nên không làm tăng dung lượng ứng dụng.</div><div id="familyList"></div></div></section>
 <section id="more" class="page"><div class="card"><h2>⚙️ Tính năng gia đình</h2><p>🚗 <b>Đưa đón:</b> quản lý ai đón ai.</p><p>🔔 <b>Nhắc việc:</b> chọn thời gian nhắc ngay khi thêm hoặc sửa lịch.</p><button class="btn" onclick="reminderModal()">🔔 Cài đặt thông báo</button><p>⚠️ <b>Trùng lịch:</b> tự kiểm tra lịch của cùng thành viên.</p><p>💾 <b>Dữ liệu:</b> lưu trên thiết bị và có thể xuất bản sao.</p><button class="btn" onclick="pickupModal()">🚗 Thêm lịch đưa đón</button></div></section>
 <button class="fab" onclick="eventModal()">+</button><nav><button class="active" onclick="go('home',this)"><span>🏠</span>Trang chủ</button><button onclick="go('cal',this)"><span>📅</span>Lịch</button><button onclick="go('tasks',this)"><span>✅</span>Công việc</button><button onclick="go('family',this)"><span>👨‍👩‍👧‍👦</span>Gia đình</button><button onclick="go('more',this)"><span>☰</span>Thêm</button></nav></div>
@@ -36,11 +38,26 @@ const allMembers=()=>[...M,ALL];
 const memberSave=()=>localStorage.setItem('family5_members',JSON.stringify(M));
 const today=()=>new Date().toISOString().slice(0,10),P=id=>allMembers().find(x=>x[0]===id)||M[0],save=()=>{localStorage.setItem('family5_v2',JSON.stringify(D));render()};
 let D=JSON.parse(localStorage.getItem('family5_v2')||'null')||{filter:'all',events:[['06:00','06:45','Tập thể dục','dad','Thể thao'],['07:00','07:30','Ăn sáng','all','Gia đình'],['07:30','11:30','Đi học','c1','Học tập'],['07:30','11:30','Đi học','c2','Học tập'],['08:00','17:00','Đi làm','mom','Công việc'],['16:30','17:00','Đón Con 1','dad','Đưa đón'],['17:00','18:30','Bóng đá','c2','Thể thao'],['19:30','21:00','Xem phim','all','Gia đình']].map((x,i)=>({id:i+1,date:today(),time:x[0],end:x[1],title:x[2],person:x[3],type:x[4]})),tasks:[{id:1,title:'Mua thực phẩm',person:'mom',done:false},{id:2,title:'Làm bài tập Toán',person:'c1',done:false},{id:3,title:'Vệ sinh phòng',person:'c2',done:false},{id:4,title:'Kiểm tra điều hòa',person:'dad',done:false},{id:5,title:'Dọn bàn ăn',person:'c3',done:true}],pickups:[{date:today(),time:'16:30',child:'c1',driver:'dad',place:'Cổng trường'}]};
-let view='day';
+let view='day',taskFilter='all';
+D.tasks=(D.tasks||[]).map(t=>({...t,due:t.due||'',priority:t.priority||'normal',note:t.note||''}));
 function go(id,b){document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));document.getElementById(id).classList.add('active');document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));if(b)b.classList.add('active');if(id==='cal')renderCal();window.scrollTo(0,0)}
 function eventHTML(e){let p=P(e.person);return `<div class="event"><b>${e.time}</b><i class="dot" style="background:${p[3]}"></i><div><div class="title">${e.title} ${e.repeat&&e.repeat!=='none'?'<span class="series">🔁</span>':''} <button class="btn" style="padding:3px 7px;float:right" onclick="eventActions(${e.id})">⋮</button></div><div class="sub">${p[2]} ${p[1]} · ${e.type}${e.end?' · '+e.end:''}</div></div></div>`}
-function taskHTML(t){let p=P(t.person);return `<div class="task row"><input type="checkbox" ${t.done?'checked':''} onchange="toggleTask(${t.id})"><div class="${t.done?'done':''}" style="flex:1"><b>${t.title}</b><div class="sub">${p[2]} ${p[1]}</div></div></div>`}
-function render(){top.innerHTML=M.map(m=>`<div class="member"><div class="av" style="background:${m[3]}22">${m[2]}</div>${m[1]}</div>`).join('');date.textContent=new Date().toLocaleDateString('vi-VN',{weekday:'long',day:'2-digit',month:'2-digit',year:'numeric'});let ev=D.events.filter(e=>e.date===today()).sort((a,b)=>a.time.localeCompare(b.time));homeEvents.innerHTML=ev.slice(0,8).map(eventHTML).join('')||'<p>Không có lịch</p>';homeTasks.innerHTML=D.tasks.map(taskHTML).join('');let pairs=conflicts();alerts.innerHTML=(pairs.length?`<div class="alert">⚠️ Có ${pairs.length} lịch trùng.<br>Kiểm tra lại lịch.</div>`:'<div class="alert ok">✓ Chưa phát hiện lịch trùng.</div>')+D.pickups.filter(p=>p.date===today()).map(p=>`<div class="alert ok">🚗 ${p.time} · ${P(p.driver)[1]} đón ${P(p.child)[1]} · ${p.place}</div>`).join('');nt.textContent=D.tasks.length;nd.textContent=D.tasks.filter(t=>t.done).length;no.textContent=D.tasks.filter(t=>!t.done).length;tasksList.innerHTML=D.tasks.map(taskHTML).join('');familyList.innerHTML=M.map(m=>`<div class="memberrow"><div class="row between"><div class="row"><button class="btn" style="font-size:25px;padding:7px 10px" onclick="avatarModal('${m[0]}')">${m[2]}</button><div><div class="membername">${m[1]}</div><div class="sub">${D.events.filter(e=>e.person===m[0]).length} lịch · ${D.tasks.filter(t=>t.person===m[0]&&!t.done).length} việc còn lại</div></div></div><div class="row" style="flex-wrap:wrap"><button class="btn" onclick="avatarModal('${m[0]}')">🖼️ Icon</button><button class="btn" onclick="renameMember('${m[0]}')">✏️ Đổi tên</button><button class="btn danger" onclick="deleteMember('${m[0]}')">🗑️ Xóa</button></div></div></div>`).join('');renderCal()}
+function taskHTML(t){
+  let p=P(t.person), due=t.due?`📅 ${new Date(t.due+'T00:00:00').toLocaleDateString('vi-VN')}`:'';
+  let pri=t.priority==='high'?'🔴 Cao':t.priority==='low'?'🟢 Thấp':'🟡 Bình thường';
+  let overdue=t.due&&!t.done&&t.due<today();
+  return `<div class="task row">
+    <input type="checkbox" ${t.done?'checked':''} onchange="toggleTask(${t.id})" aria-label="Đánh dấu hoàn thành">
+    <div style="flex:1;min-width:0">
+      <div class="row between"><div class="taskTitle ${t.done?'done':''}"><b>${t.title}</b></div><div class="actions"><button class="btn" style="padding:4px 7px" onclick="editTask(${t.id})">✏️</button><button class="btn" style="padding:4px 7px" onclick="deleteTask(${t.id})">🗑️</button></div></div>
+      <div class="meta">${p[2]} ${p[1]} · <span class="priority">${pri}</span> ${due?`· <span class="${overdue?'overdue':''}">${due}${overdue?' · Quá hạn':''}</span>`:''}</div>
+      ${t.note?`<div class="taskNote">${t.note}</div>`:''}
+    </div>
+  </div>`;
+}
+function render(){top.innerHTML=M.map(m=>`<div class="member"><div class="av" style="background:${m[3]}22">${m[2]}</div>${m[1]}</div>`).join('');date.textContent=new Date().toLocaleDateString('vi-VN',{weekday:'long',day:'2-digit',month:'2-digit',year:'numeric'});let ev=D.events.filter(e=>e.date===today()).sort((a,b)=>a.time.localeCompare(b.time));homeEvents.innerHTML=ev.slice(0,8).map(eventHTML).join('')||'<p>Không có lịch</p>';homeTasks.innerHTML=D.tasks.map(taskHTML).join('');let pairs=conflicts();alerts.innerHTML=(pairs.length?`<div class="alert">⚠️ Có ${pairs.length} lịch trùng.<br>Kiểm tra lại lịch.</div>`:'<div class="alert ok">✓ Chưa phát hiện lịch trùng.</div>')+D.pickups.filter(p=>p.date===today()).map(p=>`<div class="alert ok">🚗 ${p.time} · ${P(p.driver)[1]} đón ${P(p.child)[1]} · ${p.place}</div>`).join('');nt.textContent=D.tasks.length;nd.textContent=D.tasks.filter(t=>t.done).length;no.textContent=D.tasks.filter(t=>!t.done).length;let shownTasks=D.tasks.filter(t=>taskFilter==='all'||(taskFilter==='done'?t.done:!t.done)).sort((a,b)=>(a.done-b.done)||((a.due||'9999-12-31').localeCompare(b.due||'9999-12-31')));
+tasksList.innerHTML=shownTasks.map(taskHTML).join('')||'<div class="help" style="padding:15px;text-align:center">Không có công việc trong mục này.</div>';
+['tfAll','tfOpen','tfDone'].forEach(id=>{let el=document.getElementById(id);if(el)el.classList.toggle('active',(id==='tfAll'&&taskFilter==='all')||(id==='tfOpen'&&taskFilter==='open')||(id==='tfDone'&&taskFilter==='done'));});familyList.innerHTML=M.map(m=>`<div class="memberrow"><div class="row between"><div class="row"><button class="btn" style="font-size:25px;padding:7px 10px" onclick="avatarModal('${m[0]}')">${m[2]}</button><div><div class="membername">${m[1]}</div><div class="sub">${D.events.filter(e=>e.person===m[0]).length} lịch · ${D.tasks.filter(t=>t.person===m[0]&&!t.done).length} việc còn lại</div></div></div><div class="row" style="flex-wrap:wrap"><button class="btn" onclick="avatarModal('${m[0]}')">🖼️ Icon</button><button class="btn" onclick="renameMember('${m[0]}')">✏️ Đổi tên</button><button class="btn danger" onclick="deleteMember('${m[0]}')">🗑️ Xóa</button></div></div></div>`).join('');renderCal()}
 const avatarChoices=['👨','👩','👦','👧','🧑','👶','👨‍💼','👩‍💼','👨‍🎓','👩‍🎓','👴','👵','🧑‍🚀','🧑‍🍳','⚽','🏃','🎓','🎨'];
 function avatarModal(id){
   let m=M.find(x=>x[0]===id);if(!m)return;
@@ -192,7 +209,33 @@ function reminderCheck(){
 }
 setInterval(reminderCheck,30000);
 setTimeout(reminderCheck,1000);
-function taskModal(){modal(`<h2>Thêm công việc</h2><div class="field"><label>Công việc</label><input id="tn"></div><div class="field"><label>Người phụ trách</label><select id="tp">${M.map(m=>`<option value="${m[0]}">${m[2]} ${m[1]}</option>`).join('')}</select></div><div class="row"><button class="btn" onclick="closeM()">Hủy</button><button class="btn primary" onclick="addTask()">Lưu</button></div>`)}function addTask(){if(!tn.value.trim())return;D.tasks.push({id:Date.now(),title:tn.value.trim(),person:tp.value,done:false});closeM();save()}function toggleTask(id){let t=D.tasks.find(x=>x.id===id);t.done=!t.done;save()}
+function taskModal(e={}){
+  let isEdit=!!e.id;
+  modal(`<h2>${isEdit?'✏️ Sửa':'➕ Thêm'} công việc</h2>
+    <div class="field"><label>Công việc</label><input id="tn" value="${e.title||''}" placeholder="Ví dụ: Mua thực phẩm"></div>
+    <div class="field"><label>Người phụ trách</label><select id="tp">${M.map(m=>`<option value="${m[0]}" ${e.person===m[0]?'selected':''}>${m[2]} ${m[1]}</option>`).join('')}</select></div>
+    <div class="field"><label>Hạn hoàn thành</label><input id="tdue" type="date" value="${e.due||today()}"></div>
+    <div class="field"><label>Ưu tiên</label><select id="tpri"><option value="high" ${e.priority==='high'?'selected':''}>🔴 Cao</option><option value="normal" ${!e.priority||e.priority==='normal'?'selected':''}>🟡 Bình thường</option><option value="low" ${e.priority==='low'?'selected':''}>🟢 Thấp</option></select></div>
+    <div class="field"><label>Ghi chú</label><input id="tnote" value="${e.note||''}" placeholder="Ghi chú nếu cần"></div>
+    <div class="row"><button class="btn" onclick="closeM()">Hủy</button><button class="btn primary" onclick="${isEdit?`updateTask(${e.id})`:'addTask()'}">💾 Lưu</button></div>`)
+}
+function addTask(){
+  if(!tn.value.trim())return alert('Vui lòng nhập tên công việc.');
+  D.tasks.push({id:Date.now(),title:tn.value.trim(),person:tp.value,done:false,due:tdue.value||'',priority:tpri.value,note:tnote.value.trim()});
+  closeM();save()
+}
+function editTask(id){let t=D.tasks.find(x=>x.id===id);if(t)taskModal(t)}
+function updateTask(id){
+  let t=D.tasks.find(x=>x.id===id);if(!t)return;
+  if(!tn.value.trim())return alert('Vui lòng nhập tên công việc.');
+  Object.assign(t,{title:tn.value.trim(),person:tp.value,due:tdue.value||'',priority:tpri.value,note:tnote.value.trim()});
+  closeM();save()
+}
+function deleteTask(id){
+  let t=D.tasks.find(x=>x.id===id);if(!t)return;
+  if(confirm(`Xóa công việc "${t.title}"?`)){D.tasks=D.tasks.filter(x=>x.id!==id);save()}
+}
+function toggleTask(id){let t=D.tasks.find(x=>x.id===id);if(t){t.done=!t.done;save()}}
 function pickupModal(){modal(`<h2>🚗 Lịch đưa đón</h2><div class="field"><label>Ngày</label><input id="pd" type="date" value="${today()}"></div><div class="field"><label>Giờ</label><input id="pt" type="time" value="16:30"></div><div class="field"><label>Đón</label><select id="pc">${M.slice(2).map(m=>`<option value="${m[0]}">${m[1]}</option>`).join('')}</select></div><div class="field"><label>Người đón</label><select id="pr">${M.map(m=>`<option value="${m[0]}">${m[1]}</option>`).join('')}</select></div><div class="field"><label>Địa điểm</label><input id="pp" value="Cổng trường"></div><div class="row"><button class="btn" onclick="closeM()">Hủy</button><button class="btn primary" onclick="addPickup()">Lưu</button></div>`)}function addPickup(){D.pickups.push({date:pd.value,time:pt.value,child:pc.value,driver:pr.value,place:pp.value});closeM();save()}
 render();if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script></body></html>
