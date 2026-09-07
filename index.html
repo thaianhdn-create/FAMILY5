@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="vi"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#2563eb"><link rel="manifest" href="manifest.json"><title>Family 5 V15</title>
+<meta name="theme-color" content="#2563eb"><link rel="manifest" href="manifest.json"><title>Family 5 V16</title>
 <style>
 :root{--b:#2563eb;--bg:#f4f7fb;--card:#fff;--t:#172033;--m:#687280;--l:#e5eaf2}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--t);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}.app{max-width:480px;margin:auto;padding-bottom:78px}
@@ -43,6 +43,20 @@ nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:min(480px,
 .next-item:last-child{border-bottom:0}
 .next-time{width:43px;font-weight:800;color:var(--b)}
 .dash-empty{font-size:12px;color:var(--m);padding:5px 0}
+</style>
+
+<style>
+/* V16: Thống kê tuần/tháng */
+.analytics-tabs{display:flex;gap:6px;margin:8px 0 10px}
+.analytics-tabs button{flex:1;border:1px solid var(--l);background:#fff;border-radius:10px;padding:8px;font-weight:700;color:var(--m)}
+.analytics-tabs button.active{background:#eaf2ff;color:var(--b);border-color:#cfe0ff}
+.chart-row{display:grid;grid-template-columns:62px 1fr 30px;gap:7px;align-items:center;margin:8px 0;font-size:11px}
+.chart-bar{height:10px;background:#e8edf5;border-radius:99px;overflow:hidden}
+.chart-bar i{display:block;height:100%;background:var(--b);border-radius:99px}
+.stat-line{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--l);font-size:12px}
+.stat-line:last-child{border-bottom:0}
+.busy-day{padding:10px;border-radius:12px;background:#f8fafc;border:1px solid var(--l);margin-top:8px}
+.busy-day b{font-size:14px}
 </style>
 </head><body><div class="app">
 <header><div class="brand"><div><h1>🏠 Family 5</h1><small>Cùng nhau sắp xếp cuộc sống tốt đẹp hơn</small></div><button class="btn" onclick="reminderModal()">🔔</button></div><div class="members" id="top"></div></header>
@@ -158,32 +172,83 @@ function deleteChore(id){
 function toggleChore(id){let c=D.chores.find(x=>x.id===id);if(c){c.done=!c.done;save()}}
 
 
+
+let dashboardRange='week';
+
+function dObj(s){const a=s.split('-').map(Number);return new Date(a[0],a[1]-1,a[2])}
+function dStr(x){return `${x.getFullYear()}-${String(x.getMonth()+1).padStart(2,'0')}-${String(x.getDate()).padStart(2,'0')}`}
+function shiftDate(s,n){const x=dObj(s);x.setDate(x.getDate()+n);return dStr(x)}
+function rangeDates(mode){
+  const d=today(), x=dObj(d);
+  if(mode==='month'){
+    const first=new Date(x.getFullYear(),x.getMonth(),1);
+    const last=new Date(x.getFullYear(),x.getMonth()+1,0);
+    return [dStr(first),dStr(last)];
+  }
+  const first=new Date(x); first.setDate(x.getDate()-x.getDay()+1);
+  const last=new Date(first); last.setDate(first.getDate()+6);
+  return [dStr(first),dStr(last)];
+}
+
 function renderDashboard(){
   const el=document.getElementById('dashboard'); if(!el)return;
   const d=today();
-  const ev=D.events.filter(e=>e.date===d).sort((a,b)=>a.time.localeCompare(b.time));
+  const evToday=D.events.filter(e=>e.date===d).sort((a,b)=>a.time.localeCompare(b.time));
   const tasks=D.tasks||[], chores=D.chores||[], picks=(D.pickups||[]).filter(p=>p.date===d);
   const td=tasks.filter(t=>t.done).length, to=tasks.length-td;
   const cd=chores.filter(c=>c.done).length, co=chores.length-cd;
   const taskPct=tasks.length?Math.round(td/tasks.length*100):0;
   const chorePct=chores.length?Math.round(cd/chores.length*100):0;
   const nowTime=new Date().toTimeString().slice(0,5);
-  const upcoming=ev.filter(e=>e.time>=nowTime).slice(0,4);
+  const upcoming=evToday.filter(e=>e.time>=nowTime).slice(0,4);
 
   let members=M.map(m=>{
-    const ecount=ev.filter(e=>e.person===m[0]||e.person==='all').length;
+    const ecount=evToday.filter(e=>e.person===m[0]||e.person==='all').length;
     const tcount=tasks.filter(t=>t.person===m[0]&&!t.done).length;
     const ccount=chores.filter(c=>c.person===m[0]&&!c.done).length;
     return {...m,count:ecount+tcount+ccount};
   });
   const max=Math.max(1,...members.map(x=>x.count));
 
+  const [rs,re]=rangeDates(dashboardRange);
+  const rev=D.events.filter(e=>e.date>=rs&&e.date<=re);
+  const counts=M.map(m=>({m,count:rev.filter(e=>e.person===m[0]||e.person==='all').length}));
+  const maxC=Math.max(1,...counts.map(x=>x.count));
+  const dayMap={};
+  rev.forEach(e=>dayMap[e.date]=(dayMap[e.date]||0)+1);
+  const busiest=Object.entries(dayMap).sort((a,b)=>b[1]-a[1])[0];
+  const cats={};
+  rev.forEach(e=>cats[e.type||'Khác']=(cats[e.type||'Khác']||0)+1);
+  const topCats=Object.entries(cats).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  const maxCat=Math.max(1,...topCats.map(x=>x[1]));
+
   el.innerHTML=`
     <div class="dash-grid">
-      <div class="dash-card"><div class="big">${ev.length}</div><div class="label">📅 Lịch hôm nay</div></div>
+      <div class="dash-card"><div class="big">${evToday.length}</div><div class="label">📅 Lịch hôm nay</div></div>
       <div class="dash-card ${to?'warn':'good'}"><div class="big">${td}/${tasks.length}</div><div class="label">✅ Công việc xong</div></div>
       <div class="dash-card ${co?'warn':'good'}"><div class="big">${cd}/${chores.length}</div><div class="label">🧹 Việc nhà xong</div></div>
       <div class="dash-card purple"><div class="big">${picks.length}</div><div class="label">🚗 Chuyến đưa đón</div></div>
+    </div>
+
+    <div class="dash-section">
+      <div class="dash-title">📊 Thống kê lịch</div>
+      <div class="analytics-tabs">
+        <button class="${dashboardRange==='week'?'active':''}" onclick="dashboardRange='week';render()">Tuần này</button>
+        <button class="${dashboardRange==='month'?'active':''}" onclick="dashboardRange='month';render()">Tháng này</button>
+      </div>
+      <div class="stat-line"><span>📅 Tổng số lịch</span><b>${rev.length}</b></div>
+      <div class="stat-line"><span>👥 Thành viên có lịch</span><b>${counts.filter(x=>x.count>0).length}/${M.length}</b></div>
+      ${busiest?`<div class="busy-day">🔥 Ngày bận nhất: <b>${dObj(busiest[0]).toLocaleDateString('vi-VN',{weekday:'long',day:'2-digit',month:'2-digit'})}</b> · ${busiest[1]} lịch</div>`:'<div class="dash-empty">Chưa có lịch trong khoảng thời gian này.</div>'}
+    </div>
+
+    <div class="dash-section">
+      <div class="dash-title">👨‍👩‍👧‍👦 Lịch theo thành viên</div>
+      ${counts.map(x=>`<div class="chart-row"><b>${x.m[2]} ${x.m[1]}</b><div class="chart-bar"><i style="width:${Math.round(x.count/maxC*100)}%"></i></div><b>${x.count}</b></div>`).join('')}
+    </div>
+
+    <div class="dash-section">
+      <div class="dash-title">🏷️ Phân loại lịch</div>
+      ${topCats.length?topCats.map(x=>`<div class="chart-row"><b>${x[0]}</b><div class="chart-bar"><i style="width:${Math.round(x[1]/maxCat*100)}%"></i></div><b>${x[1]}</b></div>`).join(''):'<div class="dash-empty">Chưa có dữ liệu.</div>'}
     </div>
 
     <div class="dash-section">
@@ -193,7 +258,7 @@ function renderDashboard(){
     </div>
 
     <div class="dash-section">
-      <div class="dash-title">👨‍👩‍👧‍👦 Mức độ bận của từng thành viên</div>
+      <div class="dash-title">👨‍👩‍👧‍👦 Mức độ bận hôm nay</div>
       ${members.map(m=>`<div class="progress-row"><b>${m[2]} ${m[1]}</b><div class="progress"><i style="width:${Math.round(m.count/max*100)}%"></i></div><b>${m.count}</b></div>`).join('')}
     </div>
 
