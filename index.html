@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="vi"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#2563eb"><link rel="manifest" href="manifest.json"><title>Family 5 V17</title>
+<meta name="theme-color" content="#2563eb"><link rel="manifest" href="manifest.json"><title>Family 5 V18</title>
 <style>
 :root{--b:#2563eb;--bg:#f4f7fb;--card:#fff;--t:#172033;--m:#687280;--l:#e5eaf2}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--t);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}.app{max-width:480px;margin:auto;padding-bottom:78px}
@@ -71,6 +71,27 @@ nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:min(480px,
 .balance-tip{font-size:12px;padding:8px 0;border-bottom:1px solid var(--l)}
 .balance-tip:last-child{border-bottom:0}
 </style>
+
+<style>
+/* V18: Lịch gia đình thông minh */
+.smart-calendar{margin:10px 0 12px;padding:11px;border:1px solid var(--l);border-radius:14px;background:#f8fafc}
+.smart-head{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.smart-title{font-size:15px;font-weight:850}
+.smart-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:9px}
+.smart-stat{background:#fff;border:1px solid var(--l);border-radius:11px;padding:8px;text-align:center}
+.smart-stat b{display:block;font-size:19px;color:var(--b)}
+.smart-stat span{font-size:10px;color:var(--m)}
+.legend{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
+.legend span{font-size:10px;padding:4px 7px;border-radius:99px;background:#fff;border:1px solid var(--l)}
+.smart-alert{margin-top:9px;padding:8px 10px;border-radius:10px;font-size:11px;background:#fff3f2}
+.smart-ok{margin-top:9px;padding:8px 10px;border-radius:10px;font-size:11px;background:#f0fdf4}
+.smart-timeline{margin-top:9px}
+.smart-event{display:flex;gap:8px;align-items:flex-start;padding:7px 0;border-bottom:1px solid var(--l);font-size:11px}
+.smart-event:last-child{border-bottom:0}
+.smart-dot{width:9px;height:9px;border-radius:50%;margin-top:4px;flex:0 0 9px}
+.smart-time{width:40px;font-weight:800}
+.smart-name{font-weight:750}
+</style>
 </head><body><div class="app">
 <header><div class="brand"><div><h1>🏠 Family 5</h1><small>Cùng nhau sắp xếp cuộc sống tốt đẹp hơn</small></div><button class="btn" onclick="reminderModal()">🔔</button></div><div class="members" id="top"></div></header>
 <section id="home" class="page active">
@@ -79,7 +100,14 @@ nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:min(480px,
   <div id="dashboard"></div>
   <div class="quote">☀️ Một gia đình hạnh phúc là nền tảng của mọi thành công.</div>
 </div><div class="card"><h2>Việc sắp tới hôm nay</h2><div id="homeEvents"></div></div><div class="card"><h2>⚠️ Cảnh báo & đưa đón</h2><div id="alerts"></div></div><div class="card"><h2>✅ Công việc hôm nay</h2><div id="homeTasks"></div></div></section>
-<section id="cal" class="page"><div class="card"><div class="tabs"><button class="active" id="td" onclick="view='day';renderCal()">Ngày</button><button id="tw" onclick="view='week';renderCal()">Tuần</button><button id="tm" onclick="view='month';renderCal()">Tháng</button></div><div class="filters" id="filters"></div><div id="calendar"></div></div></section>
+<section id="cal" class="page"><div class="card">
+<div class="smart-calendar">
+  <div class="smart-head">
+    <div><div class="smart-title">🧠 Lịch gia đình thông minh</div><div class="sub">Mỗi thành viên một màu · tự phát hiện lịch trùng</div></div>
+  </div>
+  <div id="smartCalendar"></div>
+</div>
+<div class="tabs"><button class="active" id="td" onclick="view='day';renderCal()">Ngày</button><button id="tw" onclick="view='week';renderCal()">Tuần</button><button id="tm" onclick="view='month';renderCal()">Tháng</button></div><div class="filters" id="filters"></div><div id="calendar"></div></div></section>
 <section id="chores" class="page">
 <div class="card">
   <div class="row between"><h2>🏠 Việc nhà</h2><button class="btn" onclick="choreModal()">＋ Thêm</button></div>
@@ -344,7 +372,38 @@ function showDaySchedule(ds){
   let body=es.length?es.map(eventHTML).join(''):'<div style="padding:18px;text-align:center;color:#687280">Không có lịch trong ngày này</div>';
   modal(`<h2>📅 ${label}</h2><div class="sub" style="margin-bottom:10px">${es.length} lịch</div>${body}<div class="row" style="margin-top:12px;justify-content:center"><button class="btn primary" onclick="eventModal({date:'${ds}'})">＋ Thêm lịch ngày này</button><button class="btn" onclick="closeM()">Đóng</button></div>`);
 }
-function renderCal(){filters.innerHTML=allMembers().map(m=>`<button class="filter ${D.filter===m[0]?'active':''}" onclick="D.filter='${m[0]}';save()">${m[2]} ${m[1]}</button>`).join('');let b=document.getElementById('calendar');if(view==='day'){['td','tw','tm'].forEach(x=>document.getElementById(x).classList.remove('active'));td.classList.add('active');let es=D.events.filter(e=>e.date===today()&&(D.filter==='all'||e.person===D.filter||e.person==='all')).sort((a,b)=>a.time.localeCompare(b.time));b.innerHTML=`<div class="row between"><b>Hôm nay</b><span>${es.length} sự kiện</span></div>`+(es.map(eventHTML).join('')||'<div style="padding:20px;text-align:center">Không có lịch</div>')}else if(view==='month'){['td','tw','tm'].forEach(x=>document.getElementById(x).classList.remove('active'));tm.classList.add('active');let d=new Date(),y=d.getFullYear(),mo=d.getMonth(),last=new Date(y,mo+1,0).getDate(),start=(new Date(y,mo,1).getDay()+6)%7,c='';for(let i=0;i<start;i++)c+='<div class="cell"></div>';for(let day=1;day<=last;day++){let ds=`${y}-${String(mo+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`,es=D.events.filter(e=>e.date===ds&&(D.filter==='all'||e.person===D.filter||e.person==='all'));c+=`<div class="cell ${ds===today()?'today':''}" onclick="showDaySchedule('${ds}')" style="cursor:pointer"><b>${day}</b>${es.slice(0,4).map(e=>`<span class="mdot" style="background:${P(e.person)[3]}"></span>`).join('')}${es.length>4?`<div class="sub" style="font-size:9px">+${es.length-4} lịch</div>`:''}</div>`}b.innerHTML=`<div class="row between"><b>Tháng ${mo+1}/${y}</b><span>● lịch theo màu · <b>Nhấn vào ngày để xem lịch</b></span></div><div class="calgrid">${['T2','T3','T4','T5','T6','T7','CN'].map(x=>`<div style="text-align:center">${x}</div>`).join('')}${c}</div>`}else{['td','tw','tm'].forEach(x=>document.getElementById(x).classList.remove('active'));tw.classList.add('active');let s=new Date();let day=(s.getDay()+6)%7;s.setDate(s.getDate()-day);let days=[];for(let i=0;i<7;i++){let x=new Date(s);x.setDate(s.getDate()+i);days.push(x)}let c='<div></div>'+days.map(x=>{let ds=x.toISOString().slice(0,10);return `<div class="wh" onclick="showDaySchedule('${ds}')" style="cursor:pointer">${x.toLocaleDateString('vi-VN',{weekday:'short'})}<br>${x.getDate()}/${x.getMonth()+1}</div>`}).join('');for(let h=6;h<=21;h++){c+=`<div><b>${String(h).padStart(2,'0')}:00</b></div>`+days.map(x=>{let ds=x.toISOString().slice(0,10),es=D.events.filter(e=>e.date===ds&&e.time.startsWith(String(h).padStart(2,'0'))&&(D.filter==='all'||e.person===D.filter||e.person==='all'));return `<div onclick="showDaySchedule('${ds}')" style="cursor:pointer">${es.map(e=>`<div class="block" onclick="event.stopPropagation();eventActions(${e.id})">${e.time} ${e.title}</div>`).join('')}</div>`}).join('')}b.innerHTML=`<div class="row between"><b>Lịch tuần</b><span>${days[0].getDate()}–${days[6].getDate()}/${days[6].getMonth()+1} · <b>Nhấn ngày để xem</b></span></div><div class="week">${c}</div>`}}
+
+function renderSmartCalendar(){
+  const el=document.getElementById('smartCalendar'); if(!el)return;
+  const d=today();
+  const all=D.events.filter(e=>e.date===d);
+  const visible=all.filter(e=>D.filter==='all'||e.person===D.filter||e.person==='all').sort((a,b)=>a.time.localeCompare(b.time));
+  let conflictPairs=0;
+  for(let i=0;i<visible.length;i++){
+    for(let j=i+1;j<visible.length;j++){
+      if(visible[i].person==='all'||visible[j].person==='all'||visible[i].person===visible[j].person){
+        const a=visible[i],b=visible[j];
+        if(a.time<b.end && b.time<a.end) conflictPairs++;
+      }
+    }
+  }
+  const byPerson=M.map(m=>({m,count:all.filter(e=>e.person===m[0]||e.person==='all').length})).filter(x=>x.count>0);
+  el.innerHTML=`
+    <div class="smart-stats">
+      <div class="smart-stat"><b>${visible.length}</b><span>Lịch hiển thị hôm nay</span></div>
+      <div class="smart-stat"><b>${byPerson.length}/${M.length}</b><span>Thành viên có lịch</span></div>
+      <div class="smart-stat"><b>${conflictPairs}</b><span>Lịch trùng</span></div>
+    </div>
+    <div class="legend">${byPerson.map(x=>`<span style="border-color:${x.m[3]}66">${x.m[2]} ${x.m[1]} · ${x.count}</span>`).join('')}</div>
+    ${conflictPairs?`<div class="smart-alert">⚠️ Hôm nay có <b>${conflictPairs}</b> cặp lịch có thời gian chồng lên nhau. Bạn nên kiểm tra trước khi thêm lịch mới.</div>`:`<div class="smart-ok">✅ Hôm nay chưa phát hiện lịch trùng trong phạm vi đang xem.</div>`}
+    <div class="smart-timeline">
+      ${visible.slice(0,6).map(e=>`<div class="smart-event"><i class="smart-dot" style="background:${P(e.person)[3]}"></i><div class="smart-time">${e.time}</div><div><div class="smart-name">${e.title}</div><div class="sub">${P(e.person)[2]} ${P(e.person)[1]} · ${e.time}–${e.end}</div></div></div>`).join('') || '<div class="dash-empty">Hôm nay chưa có lịch trong bộ lọc này.</div>'}
+      ${visible.length>6?`<div class="sub" style="padding-top:7px">+ ${visible.length-6} lịch khác bên dưới</div>`:''}
+    </div>
+  `;
+}
+
+function renderCal(){renderSmartCalendar();filters.innerHTML=allMembers().map(m=>`<button class="filter ${D.filter===m[0]?'active':''}" onclick="D.filter='${m[0]}';save()">${m[2]} ${m[1]}</button>`).join('');let b=document.getElementById('calendar');if(view==='day'){['td','tw','tm'].forEach(x=>document.getElementById(x).classList.remove('active'));td.classList.add('active');let es=D.events.filter(e=>e.date===today()&&(D.filter==='all'||e.person===D.filter||e.person==='all')).sort((a,b)=>a.time.localeCompare(b.time));b.innerHTML=`<div class="row between"><b>Hôm nay</b><span>${es.length} sự kiện</span></div>`+(es.map(eventHTML).join('')||'<div style="padding:20px;text-align:center">Không có lịch</div>')}else if(view==='month'){['td','tw','tm'].forEach(x=>document.getElementById(x).classList.remove('active'));tm.classList.add('active');let d=new Date(),y=d.getFullYear(),mo=d.getMonth(),last=new Date(y,mo+1,0).getDate(),start=(new Date(y,mo,1).getDay()+6)%7,c='';for(let i=0;i<start;i++)c+='<div class="cell"></div>';for(let day=1;day<=last;day++){let ds=`${y}-${String(mo+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`,es=D.events.filter(e=>e.date===ds&&(D.filter==='all'||e.person===D.filter||e.person==='all'));c+=`<div class="cell ${ds===today()?'today':''}" onclick="showDaySchedule('${ds}')" style="cursor:pointer"><b>${day}</b>${es.slice(0,4).map(e=>`<span class="mdot" style="background:${P(e.person)[3]}"></span>`).join('')}${es.length>4?`<div class="sub" style="font-size:9px">+${es.length-4} lịch</div>`:''}</div>`}b.innerHTML=`<div class="row between"><b>Tháng ${mo+1}/${y}</b><span>● lịch theo màu · <b>Nhấn vào ngày để xem lịch</b></span></div><div class="calgrid">${['T2','T3','T4','T5','T6','T7','CN'].map(x=>`<div style="text-align:center">${x}</div>`).join('')}${c}</div>`}else{['td','tw','tm'].forEach(x=>document.getElementById(x).classList.remove('active'));tw.classList.add('active');let s=new Date();let day=(s.getDay()+6)%7;s.setDate(s.getDate()-day);let days=[];for(let i=0;i<7;i++){let x=new Date(s);x.setDate(s.getDate()+i);days.push(x)}let c='<div></div>'+days.map(x=>{let ds=x.toISOString().slice(0,10);return `<div class="wh" onclick="showDaySchedule('${ds}')" style="cursor:pointer">${x.toLocaleDateString('vi-VN',{weekday:'short'})}<br>${x.getDate()}/${x.getMonth()+1}</div>`}).join('');for(let h=6;h<=21;h++){c+=`<div><b>${String(h).padStart(2,'0')}:00</b></div>`+days.map(x=>{let ds=x.toISOString().slice(0,10),es=D.events.filter(e=>e.date===ds&&e.time.startsWith(String(h).padStart(2,'0'))&&(D.filter==='all'||e.person===D.filter||e.person==='all'));return `<div onclick="showDaySchedule('${ds}')" style="cursor:pointer">${es.map(e=>`<div class="block" onclick="event.stopPropagation();eventActions(${e.id})">${e.time} ${e.title}</div>`).join('')}</div>`}).join('')}b.innerHTML=`<div class="row between"><b>Lịch tuần</b><span>${days[0].getDate()}–${days[6].getDate()}/${days[6].getMonth()+1} · <b>Nhấn ngày để xem</b></span></div><div class="week">${c}</div>`}}
 function conflicts(){let e=D.events.filter(x=>x.date===today()).sort((a,b)=>a.time.localeCompare(b.time)),r=[];for(let i=0;i<e.length;i++)for(let j=i+1;j<e.length;j++){if(e[i].time<e[j].end&&e[j].time<e[i].end&&(e[i].person===e[j].person||e[i].person==='all'||e[j].person==='all'))r.push([e[i],e[j]])}return r}
 function modal(s){mc.innerHTML=s;document.getElementById('modal').classList.add('show')}function closeM(){document.getElementById('modal').classList.remove('show')}
 function dateObj(ds){let [y,m,d]=ds.split('-').map(Number);return new Date(Date.UTC(y,m-1,d))}
