@@ -8,7 +8,6 @@
   "orientation": "portrait",
   "background_color": "#f5f8ff",
   "theme_color": "#2563eb",
-  "description": "Ứng dụng quản lý thời gian biểu và công việc gia đình 5 người",
   "icons": [
     {
       "src": "icon/icon-192.png",
