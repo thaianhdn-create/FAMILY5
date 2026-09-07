@@ -7,7 +7,7 @@
   "theme_color": "#2563eb",
   "lang": "vi",
   "description": "Ứng dụng thời gian biểu gia đình 5 người",
-  "icons": [
+  "icon": [
     {
       "src": "icon/icon-192.png",
       "sizes": "192x192",
