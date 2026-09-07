@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="vi"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#2563eb"><link rel="manifest" href="manifest.json"><title>Family 5 V16</title>
+<meta name="theme-color" content="#2563eb"><link rel="manifest" href="manifest.json"><title>Family 5 V17</title>
 <style>
 :root{--b:#2563eb;--bg:#f4f7fb;--card:#fff;--t:#172033;--m:#687280;--l:#e5eaf2}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--t);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}.app{max-width:480px;margin:auto;padding-bottom:78px}
@@ -57,6 +57,19 @@ nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:min(480px,
 .stat-line:last-child{border-bottom:0}
 .busy-day{padding:10px;border-radius:12px;background:#f8fafc;border:1px solid var(--l);margin-top:8px}
 .busy-day b{font-size:14px}
+</style>
+
+<style>
+/* V17: Trợ lý cân bằng gia đình */
+.balance-box{border:1px solid var(--l);border-radius:14px;padding:11px;background:#f8fafc;margin-top:8px}
+.balance-head{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.balance-score{font-size:23px;font-weight:850;color:var(--b)}
+.balance-msg{font-size:12px;margin-top:6px;line-height:1.45}
+.balance-member{display:grid;grid-template-columns:80px 1fr 32px;gap:7px;align-items:center;margin:8px 0;font-size:11px}
+.balance-bar{height:9px;background:#e8edf5;border-radius:99px;overflow:hidden}
+.balance-bar i{display:block;height:100%;background:var(--b);border-radius:99px}
+.balance-tip{font-size:12px;padding:8px 0;border-bottom:1px solid var(--l)}
+.balance-tip:last-child{border-bottom:0}
 </style>
 </head><body><div class="app">
 <header><div class="brand"><div><h1>🏠 Family 5</h1><small>Cùng nhau sắp xếp cuộc sống tốt đẹp hơn</small></div><button class="btn" onclick="reminderModal()">🔔</button></div><div class="members" id="top"></div></header>
@@ -251,7 +264,33 @@ function renderDashboard(){
       ${topCats.length?topCats.map(x=>`<div class="chart-row"><b>${x[0]}</b><div class="chart-bar"><i style="width:${Math.round(x[1]/maxCat*100)}%"></i></div><b>${x[1]}</b></div>`).join(''):'<div class="dash-empty">Chưa có dữ liệu.</div>'}
     </div>
 
+    
     <div class="dash-section">
+      <div class="dash-title">⚖️ Trợ lý cân bằng gia đình</div>
+      <div class="balance-box">
+        ${(()=>{
+          const vals=counts.map(x=>({name:x.m[1],icon:x.m[2],count:x.count}));
+          const total=vals.reduce((s,x)=>s+x.count,0);
+          const maxV=Math.max(1,...vals.map(x=>x.count));
+          const minV=Math.min(...vals.map(x=>x.count));
+          const avg=vals.length?total/vals.length:0;
+          const busiest=vals.slice().sort((a,b)=>b.count-a.count)[0];
+          const lightest=vals.slice().sort((a,b)=>a.count-b.count)[0];
+          const ratio=avg?Math.round((maxV/avg)*100):0;
+          const score=Math.max(0,Math.min(100,100-Math.round(((maxV-minV)/Math.max(1,maxV))*100)));
+          let msg='🟢 Lịch đang khá cân bằng giữa các thành viên.';
+          if(score<45)msg='🔴 Lịch đang chênh lệch khá nhiều. Nên xem lại việc phân bổ lịch.';
+          else if(score<70)msg='🟠 Lịch có sự chênh lệch. Có thể cân đối thêm việc nhà và các hoạt động.';
+          return `<div class="balance-head"><div><b>Mức cân bằng</b><div class="balance-msg">${msg}</div></div><div class="balance-score">${score}%</div></div>
+          <div style="margin-top:9px"><div class="progress"><i style="width:${score}%"></i></div></div>
+          <div class="balance-msg">🔥 ${busiest.icon} ${busiest.name} đang có nhiều lịch nhất: <b>${busiest.count}</b> · Nhẹ nhất: <b>${lightest.name} ${lightest.count}</b>.</div>
+          <div style="margin-top:7px">${vals.map(x=>`<div class="balance-member"><b>${x.icon} ${x.name}</b><div class="balance-bar"><i style="width:${Math.round(x.count/maxV*100)}%"></i></div><b>${x.count}</b></div>`).join('')}</div>
+          <div class="balance-tip">💡 Gợi ý: khi phân công việc nhà, ưu tiên người đang có ít lịch hơn để giảm tải cho người bận.</div>`;
+        })()}
+      </div>
+    </div>
+
+<div class="dash-section">
       <div class="dash-title">📈 Tiến độ hôm nay</div>
       <div class="progress-row"><b>Việc</b><div class="progress"><i style="width:${taskPct}%"></i></div><b>${taskPct}%</b></div>
       <div class="progress-row"><b>Việc nhà</b><div class="progress"><i style="width:${chorePct}%"></i></div><b>${chorePct}%</b></div>
