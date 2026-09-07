@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#2563eb">
+<link rel="manifest" href="manifest.json">
+<title>Family 5</title>
+<style>
+:root{--blue:#2563eb;--bg:#f4f7fb;--card:#fff;--text:#172033;--muted:#6b7280;--line:#e5eaf2}
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--text)}
+.app{max-width:480px;margin:auto;min-height:100vh;padding-bottom:82px}
+header{padding:18px 18px 10px;background:linear-gradient(135deg,#eaf2ff,#fff);position:sticky;top:0;z-index:3}
+.brand{display:flex;align-items:center;justify-content:space-between}.brand h1{margin:0;font-size:25px;color:#174ea6}.brand small{color:var(--muted)}
+.card{background:var(--card);border-radius:18px;margin:12px 14px;padding:15px;box-shadow:0 5px 20px #1d4ed80d}
+.quote{background:linear-gradient(135deg,#eff6ff,#fff7ed);padding:14px;border-radius:15px;margin-top:10px}
+.members{display:flex;gap:10px;overflow:auto;padding:3px 1px}.member{min-width:68px;text-align:center;font-size:12px}.avatar{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;margin:auto auto 5px;font-size:24px;border:2px solid white;box-shadow:0 2px 8px #0001}
+.section{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}.section h2{font-size:17px;margin:0}.link{color:var(--blue);font-size:13px}
+.event{display:flex;gap:10px;padding:11px 0;border-bottom:1px solid var(--line)}.event:last-child{border:0}.time{width:46px;font-weight:700;font-size:13px}.dot{width:10px;height:10px;border-radius:50%;margin-top:5px}.event b{font-size:14px}.event span{display:block;color:var(--muted);font-size:12px;margin-top:2px}
+.nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--line);display:flex;justify-content:center;z-index:5}.navin{max-width:480px;width:100%;display:flex;justify-content:space-around}.nav button{border:0;background:none;padding:10px 7px;color:#64748b;font-size:11px}.nav button.active{color:var(--blue);font-weight:700}.nav i{display:block;font-style:normal;font-size:20px;margin-bottom:2px}
+.page{display:none}.page.active{display:block}
+.tabs{display:flex;background:#eef3fb;border-radius:12px;padding:3px;margin:10px 14px}.tabs button{flex:1;border:0;background:none;padding:9px;border-radius:9px}.tabs button.active{background:#fff;color:var(--blue);font-weight:700}
+.row{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}.row:last-child{border:0}.tag{font-size:11px;padding:4px 7px;border-radius:8px;background:#eef4ff;color:#2563eb}
+.check{width:20px;height:20px}.fab{position:fixed;right:22px;bottom:78px;width:52px;height:52px;border:0;border-radius:50%;background:var(--blue);color:white;font-size:28px;box-shadow:0 8px 22px #2563eb55}
+input,select{width:100%;padding:11px;border:1px solid var(--line);border-radius:10px;margin-top:6px;font:inherit}label{font-size:12px;color:var(--muted)}.modal{position:fixed;inset:0;background:#0007;display:none;align-items:end;z-index:10}.modal.show{display:flex}.sheet{background:white;width:100%;max-width:480px;margin:auto;border-radius:22px 22px 0 0;padding:20px}.btn{width:100%;padding:12px;border:0;border-radius:11px;background:var(--blue);color:white;font-weight:700;margin-top:12px}.empty{padding:25px;text-align:center;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="app">
+<header><div class="brand"><div><h1>🏠 Family 5</h1><small>Cùng nhau sắp xếp cuộc sống tốt đẹp hơn</small></div><div style="font-size:28px">🔔</div></div></header>
+
+<section id="home" class="page active">
+<div class="card"><b id="today"></b><div class="quote">☀️ <b>Một gia đình hạnh phúc là nền tảng của mọi thành công.</b></div></div>
+<div class="card"><div class="section"><h2>👨‍👩‍👧‍👦 Thành viên</h2><span class="link">5 người</span></div><div class="members" id="members"></div></div>
+<div class="card"><div class="section"><h2>Việc sắp tới hôm nay</h2><span class="link">Xem tất cả</span></div><div id="todayEvents"></div></div>
+<div class="card"><div class="section"><h2>✅ Việc cần làm</h2><span class="link" id="taskCount"></span></div><div id="homeTasks"></div></div>
+</section>
+
+<section id="calendar" class="page">
+<div class="tabs"><button class="active" onclick="setTab(this,'day')">Ngày</button><button onclick="setTab(this,'week')">Tuần</button><button onclick="setTab(this,'month')">Tháng</button></div>
+<div class="card"><div class="section"><h2>📅 Lịch gia đình</h2><span class="link" onclick="openEvent()">＋ Thêm</span></div><div id="calendarEvents"></div></div>
+</section>
+
+<section id="tasks" class="page">
+<div class="card"><div class="section"><h2>✅ Công việc</h2><span class="tag" id="progress">0%</span></div><div id="taskList"></div></div>
+</section>
+
+<section id="family" class="page">
+<div class="card"><div class="section"><h2>👨‍👩‍👧‍👦 Thành viên</h2><span class="link">Gia đình</span></div><div id="familyList"></div></div>
+<div class="card"><b>💡 Gợi ý</b><p style="color:#6b7280;font-size:13px">Mỗi thành viên có lịch riêng, nhưng các sự kiện gia đình được chia sẻ cho cả 5 người.</p></div>
+</section>
+
+<section id="more" class="page">
+<div class="card"><h2 style="margin-top:0">⚙️ Cài đặt</h2>
+<div class="row">Thông tin gia đình <span>›</span></div><div class="row">Nhắc nhở <span>›</span></div><div class="row">Đồng bộ dữ liệu <span>☁️</span></div><div class="row">Sao lưu & khôi phục <span>›</span></div><div class="row">Giới thiệu Family 5 <span>›</span></div></div>
+<div class="card"><b>Phiên bản 1.0</b><p style="color:#6b7280;font-size:13px">Bản thử nghiệm cá nhân cho gia đình 5 người.</p></div>
+</section>
+
+<button class="fab" onclick="openEvent()">＋</button>
+<nav class="nav"><div class="navin">
+<button class="active" onclick="go('home',this)"><i>🏠</i>Trang chủ</button>
+<button onclick="go('calendar',this)"><i>📅</i>Lịch</button>
+<button onclick="go('tasks',this)"><i>✅</i>Công việc</button>
+<button onclick="go('family',this)"><i>👨‍👩‍👧‍👦</i>Gia đình</button>
+<button onclick="go('more',this)"><i>☰</i>Thêm</button>
+</div></nav>
+</div>
+
+<div class="modal" id="modal"><div class="sheet"><h2 style="margin-top:0">➕ Thêm lịch</h2>
+<label>Nội dung<input id="evTitle" placeholder="Ví dụ: Đón Con 1"></label><br><br>
+<label>Giờ<input id="evTime" type="time" value="17:00"></label><br><br>
+<label>Thành viên<select id="evMember"><option>Bố</option><option>Mẹ</option><option>Con 1</option><option>Con 2</option><option>Con 3</option><option>Cả nhà</option></select></label>
+<button class="btn" onclick="saveEvent()">Lưu lịch</button><button class="btn" style="background:#e5e7eb;color:#111" onclick="closeModal()">Hủy</button>
+</div></div>
+<script>
+const members=[['Bố','👨','blue'],['Mẹ','👩','pink'],['Con 1','👦','green'],['Con 2','👦','orange'],['Con 3','👧','purple']];
+const colors={Bố:'#dbeafe',Mẹ:'#fce7f3','Con 1':'#dcfce7','Con 2':'#ffedd5','Con 3':'#ede9fe','Cả nhà':'#e0f2fe'};
+let events=JSON.parse(localStorage.getItem('f5_events')||'null')||[
+['06:00','Bố','Tập thể dục','🏃'],['07:00','Cả nhà','Ăn sáng','🍳'],['07:30','Con 1','Đi học','🏫'],['07:30','Con 2','Đi học','🏫'],['08:00','Mẹ','Đi làm','💼'],['16:30','Bố','Đón Con 1','🚗'],['17:00','Con 2','Bóng đá','⚽'],['19:30','Cả nhà','Xem phim','🎬']];
+let tasks=JSON.parse(localStorage.getItem('f5_tasks')||'null')||[
+['Mua thực phẩm','Mẹ',false],['Làm bài tập Toán','Con 1',false],['Vệ sinh phòng','Con 2',false],['Kiểm tra điều hòa','Bố',false],['Dọn bàn ăn','Con 3',true],['Giặt quần áo','Mẹ',true]];
+function save(){localStorage.setItem('f5_events',JSON.stringify(events));localStorage.setItem('f5_tasks',JSON.stringify(tasks))}
+function render(){document.getElementById('today').textContent=new Intl.DateTimeFormat('vi-VN',{weekday:'long',day:'2-digit',month:'2-digit',year:'numeric'}).format(new Date()); 
+document.getElementById('members').innerHTML=members.map(m=>`<div class="member"><div class="avatar" style="background:${colors[m[0]]}">${m[1]}</div>${m[0]}</div>`).join('');
+const ev=events.slice().sort((a,b)=>a[0].localeCompare(b[0])); let evhtml=ev.map(e=>`<div class="event"><div class="time">${e[0]}</div><div class="dot" style="background:${colors[e[1]]||'#bfdbfe'}"></div><div><b>${e[3]} ${e[2]}</b><span>${e[1]}</span></div></div>`).join('');
+document.getElementById('todayEvents').innerHTML=evhtml; document.getElementById('calendarEvents').innerHTML=evhtml;
+const open=tasks.filter(t=>!t[2]).length; document.getElementById('taskCount').textContent=open+' việc chưa xong';
+document.getElementById('homeTasks').innerHTML=tasks.filter(t=>!t[2]).slice(0,4).map((t,i)=>`<div class="row"><span>☐ ${t[0]} <small style="color:#6b7280">· ${t[1]}</small></span><span class="tag">Hôm nay</span></div>`).join('');
+document.getElementById('taskList').innerHTML=tasks.map((t,i)=>`<div class="row"><span><input class="check" type="checkbox" ${t[2]?'checked':''} onchange="toggleTask(${i})"> ${t[0]} <small style="color:#6b7280">· ${t[1]}</small></span><span class="tag">${t[2]?'Hoàn thành':'Chưa làm'}</span></div>`).join('');
+let done=tasks.filter(t=>t[2]).length;document.getElementById('progress').textContent=Math.round(done/tasks.length*100)+'%';
+document.getElementById('familyList').innerHTML=members.map(m=>`<div class="row"><div style="display:flex;align-items:center;gap:10px"><div class="avatar" style="background:${colors[m[0]]};margin:0;width:40px;height:40px">${m[1]}</div><div><b>${m[0]}</b><div style="font-size:12px;color:#6b7280">${m[0]=='Bố'||m[0]=='Mẹ'?'Người lớn':'Thành viên trẻ'}</div></div></div><span>›</span></div>`).join('')}
+function go(id,btn){document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));document.getElementById(id).classList.add('active');document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('active'));btn.classList.add('active');window.scrollTo(0,0)}
+function toggleTask(i){tasks[i][2]=!tasks[i][2];save();render()}
+function openEvent(){document.getElementById('modal').classList.add('show')}
+function closeModal(){document.getElementById('modal').classList.remove('show')}
+function saveEvent(){let title=document.getElementById('evTitle').value.trim();if(!title)return alert('Hãy nhập nội dung lịch');events.push([document.getElementById('evTime').value,document.getElementById('evMember').value,title,'📌']);events.sort((a,b)=>a[0].localeCompare(b[0]));save();render();closeModal();document.getElementById('evTitle').value=''}
+function setTab(btn,tab){document.querySelectorAll('.tabs button').forEach(x=>x.classList.remove('active'));btn.classList.add('active');}
+if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
+render();
+</script>
+</body></html>

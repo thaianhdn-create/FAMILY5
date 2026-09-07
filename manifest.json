@@ -1,0 +1,10 @@
+{
+  "name": "Family 5",
+  "short_name": "Family 5",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f4f7fb",
+  "theme_color": "#2563eb",
+  "lang": "vi",
+  "description": "Ứng dụng thời gian biểu gia đình 5 người"
+}
