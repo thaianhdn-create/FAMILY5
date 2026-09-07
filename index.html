@@ -112,13 +112,55 @@ function eventActions(id){let e=D.events.find(x=>x.id===id);if(!e)return;let cou
 function deleteEvent(id,all=false){let e=D.events.find(x=>x.id===id);if(!e)return;let msg=all?`⚠️ Xóa toàn bộ ${D.events.filter(x=>x.seriesId===e.seriesId).length} lần của lịch "${e.title}"?`:`⚠️ Bạn có chắc muốn xóa lịch "${e.title}" không?`;if(!confirm(msg))return;if(all&&e.seriesId)D.events=D.events.filter(x=>x.seriesId!==e.seriesId);else D.events=D.events.filter(x=>x.id!==id);closeM();save();go('cal')}
 function editEvent(id){eventModal(D.events.find(e=>e.id===id))}
 
+let alarmCtx=null;
+let alarmEnabled=localStorage.getItem('family5_alarm_sound')==='1';
+function initAlarmSound(){
+  try{
+    const AC=window.AudioContext||window.webkitAudioContext;
+    if(!AC)return false;
+    if(!alarmCtx)alarmCtx=new AC();
+    if(alarmCtx.state==='suspended')alarmCtx.resume();
+    alarmEnabled=true;
+    localStorage.setItem('family5_alarm_sound','1');
+    return true;
+  }catch(e){return false}
+}
+function playAlarm(){
+  if(!alarmEnabled)return;
+  try{
+    if(!alarmCtx&&!initAlarmSound())return;
+    if(alarmCtx.state==='suspended')alarmCtx.resume();
+    const now=alarmCtx.currentTime;
+    const gain=alarmCtx.createGain();
+    gain.gain.setValueAtTime(0.0001,now);
+    gain.gain.exponentialRampToValueAtTime(0.28,now+0.03);
+    gain.gain.exponentialRampToValueAtTime(0.0001,now+0.65);
+    gain.connect(alarmCtx.destination);
+    [0,0.18,0.36,0.54].forEach((off,i)=>{
+      const o=alarmCtx.createOscillator();
+      o.type='sine'; o.frequency.value=i%2?880:660;
+      o.connect(gain); o.start(now+off); o.stop(now+off+0.13);
+    });
+    if(navigator.vibrate)navigator.vibrate([250,120,250]);
+  }catch(e){}
+}
 function reminderModal(){
   let supported='Notification'in window;
   let status=!supported?'Trình duyệt không hỗ trợ':Notification.permission==='granted'?'Đã bật thông báo':Notification.permission==='denied'?'Đã bị chặn':'Chưa cấp quyền';
-  modal(`<h2>🔔 Nhắc việc</h2><div class="alert ok">Trạng thái: <b>${status}</b></div><p class="sub">Family 5 sẽ kiểm tra lịch sắp tới và nhắc theo lựa chọn của từng lịch. Để nhận thông báo, hãy cho phép thông báo trên trình duyệt.</p><div class="row"><button class="btn" onclick="requestNotify()">🔔 Bật thông báo</button><button class="btn" onclick="closeM()">Đóng</button></div>`);
+  let sound=alarmEnabled?'Đã bật âm thanh':'Chưa bật âm thanh';
+  modal(`<h2>🔔 Nhắc việc</h2><div class="alert ok">Thông báo: <b>${status}</b><br>Âm thanh: <b>${sound}</b></div><p class="sub">Khi đến thời gian nhắc, Family 5 sẽ hiện thông báo và phát tiếng báo nếu âm thanh đã được bật. Rung tùy thiết bị/trình duyệt.</p><div class="row" style="flex-wrap:wrap"><button class="btn primary" onclick="enableAlarm()">🔊 Bật âm thanh</button><button class="btn" onclick="testAlarm()">▶️ Thử âm thanh</button></div><div class="row" style="margin-top:9px"><button class="btn" onclick="requestNotify()">🔔 Bật thông báo</button><button class="btn" onclick="closeM()">Đóng</button></div>`);
+}
+function enableAlarm(){
+  if(initAlarmSound()){playAlarm();alert('🔊 Đã bật âm thanh báo thức cho Family 5.');}
+  else alert('⚠️ Thiết bị/trình duyệt không hỗ trợ âm thanh báo thức.');
+}
+function testAlarm(){
+  if(!initAlarmSound()){alert('⚠️ Không thể bật âm thanh trên trình duyệt này.');return}
+  playAlarm();
 }
 async function requestNotify(){
-  if(!('Notification'in window))return alert('Thiết bị/trình duyệt này chưa hỗ trợ thông báo.');
+  initAlarmSound();
+  if(!('Notification'in window)){closeM();return alert('Thiết bị/trình duyệt này chưa hỗ trợ thông báo.');}
   let p=await Notification.requestPermission();
   closeM();
   if(p==='granted')alert('✅ Đã bật thông báo cho Family 5.');
@@ -133,6 +175,7 @@ function reminderCheck(){
       sent[sid]=Date.now();
       localStorage.setItem('family5_sent',JSON.stringify(sent));
       let msg=`${e.title} · ${P(e.person)[1]} · ${e.time}`;
+      playAlarm();
       if('Notification'in window&&Notification.permission==='granted') new Notification('🔔 Family 5', {body:`Sắp đến lịch: ${msg}`});
       else {
         let old=document.getElementById('alerts');
