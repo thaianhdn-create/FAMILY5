@@ -426,7 +426,34 @@ function avatarModal(id){
 }
 function chooseAvatar(id,i){window.pendingAvatar=avatarChoices[i];document.querySelectorAll('[id^="memberAv"]').forEach(x=>x.style.outline='');let b=document.getElementById('memberAv'+i);if(b)b.style.outline='2px solid var(--b)'}
 function saveAvatar(id){let m=M.find(x=>x[0]===id);if(!m)return;m[2]=window.pendingAvatar||m[2];memberSave();closeM();render();alert(`✅ Đã lưu biểu tượng cho ${m[1]}.`)}
-function renameMember(id){let m=M.find(x=>x[0]===id);if(!m)return;let n=prompt(`Nhập tên cho ${m[1]}:`,m[1]);if(n===null)return;n=n.trim();if(!n)return alert('Tên không được để trống');savedNames[id]=n;localStorage.setItem('family5_names',JSON.stringify(savedNames));m[1]=n;memberSave();render()}
+async function renameMember(id){
+  let m=M.find(x=>x[0]===id);
+  if(!m)return;
+
+  let n=prompt("Nhập tên mới:",m[1]);
+  if(n===null)return;
+
+  n=n.trim();
+  if(!n)return alert("Tên không được để trống");
+
+  m[1]=n;
+
+  savedNames[id]=n;
+  localStorage.setItem(
+    "family5_names",
+    JSON.stringify(savedNames)
+  );
+
+  memberSave();
+
+  if(typeof cloudSave==="function"){
+    await cloudSave();
+  }
+
+  render();
+
+  alert("✅ Đã đổi tên thành công");
+}
 function addMember(){let colors=['#06b6d4','#84cc16','#eab308','#a855f7','#f43f5e','#14b8a6'];modal(`<h2>＋ Thêm thành viên</h2><div class="field"><label>Tên thành viên</label><input id="newMemberName" value="Thành viên mới" maxlength="30"></div><div class="field"><label>Chọn biểu tượng</label><div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px">${avatarChoices.map((a,i)=>`<button type="button" id="av${i}" class="btn" style="font-size:24px;padding:9px 3px" onclick="chooseNewAvatar(${i})">${a}</button>`).join('')}</div></div><div class="row"><button class="btn" onclick="closeM()">Hủy</button><button class="btn primary" onclick="saveNewMember()">Lưu</button></div>`);window.newMemberAvatar='👤';setTimeout(()=>document.getElementById('newMemberName')?.focus(),50)}
 function chooseNewAvatar(i){window.newMemberAvatar=avatarChoices[i];document.querySelectorAll('[id^=av]').forEach(x=>x.style.outline='');let b=document.getElementById('av'+i);if(b)b.style.outline='2px solid var(--b)'}
 function saveNewMember(){let el=document.getElementById('newMemberName');let name=(el?.value||'').trim();if(!name)return alert('Tên không được để trống');let id='m'+Date.now();let colors=['#06b6d4','#84cc16','#eab308','#a855f7','#f43f5e','#14b8a6'];let color=colors[M.length%colors.length];M.push([id,name,window.newMemberAvatar||'👤',color]);memberSave();closeM();render();alert(`✅ Đã thêm thành viên ${name}.`)}
