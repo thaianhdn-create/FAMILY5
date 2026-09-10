@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="vi"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#2563eb"><link rel="manifest" href="manifest.json"><title>Family 5 V20.2</title>
+<meta name="theme-color" content="#2563eb"><link rel="manifest" href="manifest.json"><title>Family 5 V20</title>
 <style>
 :root{--b:#2563eb;--bg:#f4f7fb;--card:#fff;--t:#172033;--m:#687280;--l:#e5eaf2}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--t);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}.app{max-width:480px;margin:auto;padding-bottom:78px}
@@ -179,20 +179,9 @@ let currentUser=null, cloudReady=false, cloudTimer=null, loadingCloud=true, stop
 function authMessage(msg,ok=false){const el=document.getElementById('authMsg');if(!el)return;el.textContent=msg;el.className='auth-msg'+(ok?' ok':'');el.style.display=msg?'block':'none'}
 window.loginFamily=async function(){const email=document.getElementById('loginEmail').value.trim(),pw=document.getElementById('loginPassword').value;if(!email||!pw)return authMessage('Vui lòng nhập email và mật khẩu.');const b=document.getElementById('loginBtn');b.disabled=true;b.textContent='⏳ Đang đăng nhập...';try{await signInWithEmailAndPassword(auth,email,pw);authMessage('');}catch(e){authMessage('❌ Email hoặc mật khẩu không đúng.');}finally{b.disabled=false;b.textContent='🔐 Đăng nhập'}};
 window.logoutFamily=async function(){await signOut(auth)};
-function cleanFirestore(v){
-  if(Array.isArray(v)){
-    return v.map((x,i)=>Array.isArray(x)?{_index:i,items:cleanFirestore(x)}:cleanFirestore(x));
-  }
-  if(v && typeof v==='object'){
-    const o={};
-    Object.keys(v).forEach(k=>o[k]=cleanFirestore(v[k]));
-    return o;
-  }
-  return v;
-}
-function cloudPayload(){return cleanFirestore({version:20,members:M,data:D,updatedAt:Date.now(),updatedBy:currentUser?.uid||''})}
+function cloudPayload(){return {version:20,members:M,data:D,updatedAt:Date.now(),updatedBy:currentUser?.uid||''}}
 async function cloudSave(){if(!cloudReady||!currentUser)return;clearTimeout(cloudTimer);cloudTimer=setTimeout(async()=>{try{const el=document.getElementById('syncStatus');if(el)el.textContent='☁️ Đang đồng bộ...';await setDoc(FAMILY_DOC,cloudPayload());if(el)el.textContent='☁️ Đã đồng bộ với gia đình';}catch(e){console.warn('Family5 cloud save',e);const el=document.getElementById('syncStatus');if(el)el.textContent='⚠️ Chưa đồng bộ — kiểm tra mạng';}},250)}
-async function loadCloud(){loadingCloud=true;try{const el=document.getElementById('syncStatus');if(el)el.textContent='☁️ Đang kết nối dữ liệu gia đình...';const snap=await getDoc(FAMILY_DOC);if(snap.exists()&&snap.data().members&&snap.data().data){const x=snap.data();M=x.members;D=x.data;localStorage.setItem('family5_v2',JSON.stringify(D));localStorage.setItem('family5_members',JSON.stringify(M));}else{await setDoc(FAMILY_DOC,cloudPayload());}cloudReady=true;render();if(el)el.textContent='☁️ Đã đồng bộ với gia đình';if(stopCloudWatch)stopCloudWatch();stopCloudWatch=onSnapshot(FAMILY_DOC,(snap)=>{if(!snap.exists()||applyingCloud)return;const x=snap.data();if(x.updatedBy===currentUser?.uid){if(el)el.textContent='☁️ Đã đồng bộ với gia đình';return;}if(x.members&&x.data){applyingCloud=true;M=x.members;D=x.data;localStorage.setItem('family5_v2',JSON.stringify(D));localStorage.setItem('family5_members',JSON.stringify(M));render();if(el)el.textContent='☁️ Đã đồng bộ với gia đình';setTimeout(()=>applyingCloud=false,0);}},(error)=>{console.warn('Family5 realtime sync',error);if(el)el.textContent='⚠️ Chưa đồng bộ — kiểm tra mạng';});}catch(e){console.warn(e);const el=document.getElementById('syncStatus');if(el)el.textContent='⚠️ Chưa đồng bộ — kiểm tra mạng';authMessage('Không tải được dữ liệu Family 5. Kiểm tra kết nối mạng.');}finally{loadingCloud=false}}
+async function loadCloud(){loadingCloud=true;try{const snap=await getDoc(FAMILY_DOC);if(snap.exists()&&snap.data().members&&snap.data().data){const x=snap.data();M=x.members;D=x.data;localStorage.setItem('family5_v2',JSON.stringify(D));localStorage.setItem('family5_members',JSON.stringify(M));}else{await setDoc(FAMILY_DOC,cloudPayload());}cloudReady=true;render();if(stopCloudWatch)stopCloudWatch();stopCloudWatch=onSnapshot(FAMILY_DOC,(snap)=>{if(!snap.exists()||applyingCloud)return;const x=snap.data();if(x.updatedBy===currentUser?.uid)return;if(x.members&&x.data){applyingCloud=true;M=x.members;D=x.data;localStorage.setItem('family5_v2',JSON.stringify(D));localStorage.setItem('family5_members',JSON.stringify(M));render();setTimeout(()=>applyingCloud=false,0);}}); }catch(e){console.warn(e);authMessage('Không tải được dữ liệu Family 5. Kiểm tra kết nối mạng.');}finally{loadingCloud=false}}
 onAuthStateChanged(auth,async user=>{currentUser=user;if(!user&&stopCloudWatch){stopCloudWatch();stopCloudWatch=null;}const screen=document.getElementById('authScreen');const root=document.getElementById('appRoot');if(user){screen.style.display='none';root.style.display='block';await loadCloud();}else{screen.style.display='flex';root.style.display='none';cloudReady=false}});
 
 let M=JSON.parse(localStorage.getItem('family5_members')||'null')||[['dad','Bố','👨','#3b82f6'],['mom','Mẹ','👩','#ec4899'],['c1','Con 1','👦','#22c55e'],['c2','Con 2','👦','#f97316'],['c3','Con 3','👧','#8b5cf6']];
@@ -658,7 +647,5 @@ function deleteTask(id){
 function toggleTask(id){let t=D.tasks.find(x=>x.id===id);if(t){t.done=!t.done;save()}}
 function pickupModal(){modal(`<h2>🚗 Lịch đưa đón</h2><div class="field"><label>Ngày</label><input id="pd" type="date" value="${today()}"></div><div class="field"><label>Giờ</label><input id="pt" type="time" value="16:30"></div><div class="field"><label>Đón</label><select id="pc">${M.slice(2).map(m=>`<option value="${m[0]}">${m[1]}</option>`).join('')}</select></div><div class="field"><label>Người đón</label><select id="pr">${M.map(m=>`<option value="${m[0]}">${m[1]}</option>`).join('')}</select></div><div class="field"><label>Địa điểm</label><input id="pp" value="Cổng trường"></div><div class="row"><button class="btn" onclick="closeM()">Hủy</button><button class="btn primary" onclick="addPickup()">Lưu</button></div>`)}function addPickup(){D.pickups.push({date:pd.value,time:pt.value,child:pc.value,driver:pr.value,place:pp.value});closeM();save()}
 function accountModal(){modal(`<h2>🔐 Tài khoản Family 5</h2><div class="alert ok">Đã đăng nhập</div><div class="field"><label>Email</label><input value="${currentUser?.email||''}" readonly></div><div class="field"><label>ID người dùng</label><input value="${currentUser?.uid||''}" readonly></div><div class="help">Dữ liệu lịch được đồng bộ lên Firebase để các điện thoại trong gia đình dùng chung.</div><div class="row"><button class="btn" onclick="closeM()">Đóng</button><button class="btn danger" onclick="closeM();logoutFamily()">Đăng xuất</button></div>`)}
-// V20.1: expose UI handlers to inline onclick attributes (module scripts are not global)
-Object.assign(window,{accountModal,addMember,addPickup,avatarModal,chooseAvatar,chooseNewAvatar,choreModal,closeM,deleteChore,deleteEvent,deleteMember,editChore,editEvent,editTask,enableAlarm,eventActions,eventModal,go,pickupModal,reminderModal,renameMember,render,renderCal,requestNotify,save,saveAvatar,saveEvent,saveNewMember,showDaySchedule,stopAlarm,taskModal,testAlarm,updateChore,updateTask});
 render();if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script></div></body></html>
